@@ -4,9 +4,7 @@ A satirical Oregon Trail clone where you're just trying to survive 2026. The pol
 
 ## Premise
 
-Cross the hellscape of modern existence from January to December. Every month is a landmark on the trail. Everything wants to kill you. Now featuring three overlapping apocalypses: the climate you ignored, the aliens nobody will confirm, and the cosmic horrors rising from the deep.
-
-Every run weights the crisis themes differently. No two apocalypses are the same.
+Cross the hellscape of modern existence from January to December. Every month is a landmark on the trail. Everything wants to kill you. Now featuring all crises active simultaneously: the climate you ignored, the aliens nobody will confirm, the cosmic horrors rising from the deep, and more. Everything on fire at once. That's the joke.
 
 ## Crisis Themes
 
@@ -40,11 +38,9 @@ Three doom layers. Each follows the same structure: dedicated months, unique mec
 
 ### Theme Intensity (Per-Run)
 
-Each run randomly weights the three themes. Some runs are mostly climate with alien whispers. Others are full cosmic horror with a side of heat dome. The tagline:
+All three crises are active in every run. This isn't a menu — it's the polycrisis. Everything hits at once, events overlap, and the horror is the simultaneity. Climate damages your body while aliens erode your certainty while Cthulhu dissolves your sanity — sometimes in the same month, sometimes in the same event.
 
-**"Every run is a different apocalypse."**
-
-Intensity affects: event frequency from each pool, which mini-games appear, which months trigger major theme events, and which ending you're most likely to get.
+Cross-theme events (see below) are where the game earns its name: crises that cascade across boundaries, where a wildfire reveals a buried artifact that triggers a sanity check that makes you miss the evacuation order.
 
 ---
 
