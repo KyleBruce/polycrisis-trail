@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚰️ Polycrisis Trail</title>
+  <meta name="description" content="A satirical Oregon Trail clone where you survive the polycrisis. Every run is a different apocalypse.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚰️</text></svg>">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --fg: #c4f042;
+      --fg-dim: #6a7a2a;
+      --accent: #ff4444;
+      --amber: #ffb000;
+      --terminal: #1a1a1a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'Courier New', Courier, monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0) 0px,
+        rgba(0,0,0,0) 2px,
+        rgba(0,0,0,0.15) 3px,
+        rgba(0,0,0,0.15) 3px
+      );
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* Flicker */
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      48% { opacity: 1; }
+      49% { opacity: 0.92; }
+      50% { opacity: 1; }
+      51% { opacity: 0.88; }
+      52% { opacity: 1; }
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      animation: flicker 6s infinite;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .header h1 {
+      font-size: clamp(2rem, 8vw, 4rem);
+      color: var(--fg);
+      text-shadow: 0 0 20px rgba(196, 240, 66, 0.4);
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .header .subtitle {
+      color: var(--fg-dim);
+      font-size: clamp(0.8rem, 3vw, 1rem);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .tagline {
+      text-align: center;
+      font-size: clamp(1rem, 4vw, 1.4rem);
+      color: var(--amber);
+      margin-bottom: 3rem;
+      font-style: italic;
+    }
+
+    .tagline::before { content: '> '; color: var(--fg-dim); }
+    .tagline::after { content: ' _'; animation: blink 1s step-end infinite; }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    .crisis-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .crisis-card {
+      background: var(--terminal);
+      border: 1px solid var(--fg-dim);
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: default;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .crisis-card:hover {
+      border-color: var(--fg);
+      box-shadow: 0 0 15px rgba(196, 240, 66, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .crisis-card .icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .crisis-card h3 {
+      color: var(--fg);
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.05em;
+    }
+
+    .crisis-card p {
+      color: var(--fg-dim);
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+
+    .crisis-card .damage {
+      margin-top: 0.75rem;
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .party-preview {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .party-preview h2 {
+      color: var(--fg-dim);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 1rem;
+    }
+
+    .party-members {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .party-member {
+      background: var(--terminal);
+      border: 1px solid var(--fg-dim);
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+      color: var(--fg);
+      transition: all 0.2s;
+    }
+
+    .party-member:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .death-marquee {
+      background: var(--terminal);
+      border-top: 1px solid var(--fg-dim);
+      border-bottom: 1px solid var(--fg-dim);
+      padding: 0.75rem 0;
+      margin-bottom: 3rem;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .death-marquee-track {
+      display: inline-block;
+      animation: scroll 30s linear infinite;
+    }
+
+    .death-marquee-track span {
+      color: var(--accent);
+      font-size: 0.85rem;
+      margin: 0 2rem;
+    }
+
+    .death-marquee-track span::before {
+      content: '⚰ ';
+      color: var(--fg-dim);
+    }
+
+    @keyframes scroll {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+
+    .cta {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .cta-button {
+      display: inline-block;
+      background: var(--fg);
+      color: var(--bg);
+      padding: 0.8rem 2rem;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: bold;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: all 0.2s;
+    }
+
+    .cta-button:hover {
+      background: var(--amber);
+      box-shadow: 0 0 20px rgba(255, 176, 0, 0.4);
+    }
+
+    .cta-button:disabled {
+      background: var(--fg-dim);
+      color: var(--terminal);
+      cursor: not-allowed;
+    }
+
+    .status {
+      text-align: center;
+      color: var(--fg-dim);
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .status .blink {
+      color: var(--amber);
+      animation: blink 1.5s step-end infinite;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      color: var(--fg-dim);
+      font-size: 0.75rem;
+      border-top: 1px solid var(--terminal);
+    }
+
+    footer a {
+      color: var(--fg-dim);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      color: var(--fg);
+    }
+
+    /* Glitch effect for fun */
+    @keyframes glitch {
+      0%, 90%, 100% { transform: translate(0); }
+      92% { transform: translate(-2px, 1px); }
+      94% { transform: translate(2px, -1px); }
+      96% { transform: translate(-1px, -1px); }
+      98% { transform: translate(1px, 1px); }
+    }
+
+    .header h1 {
+      animation: glitch 8s infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>⚰️ POLYCRISIS TRAIL</h1>
+      <div class="subtitle">A Satirical Oregon Trail Clone</div>
+    </div>
+
+    <div class="tagline">Every run is a different apocalypse</div>
+
+    <div class="crisis-grid">
+      <div class="crisis-card">
+        <div class="icon">🌍</div>
+        <h3>CLIMATE</h3>
+        <p>You knew it was coming. You did nothing. Now breathe the smoke.</p>
+        <div class="damage">Damage: Health, Supplies</div>
+      </div>
+      <div class="crisis-card">
+        <div class="icon">👽</div>
+        <h3>ALIENS</h3>
+        <p>The government confirms nothing. That's somehow worse than confirmation.</p>
+        <div class="damage">Damage: Hope, Morale</div>
+      </div>
+      <div class="crisis-card">
+        <div class="icon">🐙</div>
+        <h3>CTHULHU</h3>
+        <p>The Old Ones are rising. The planning commission hasn't approved the zoning.</p>
+        <div class="damage">Damage: Sanity</div>
+      </div>
+    </div>
+
+    <div class="party-preview">
+      <h2>Choose Your Party</h2>
+      <div class="party-members">
+        <span class="party-member">Gig Worker</span>
+        <span class="party-member">Tech Bro</span>
+        <span class="party-member">Teacher</span>
+        <span class="party-member">Boomer</span>
+        <span class="party-member">Gen Z</span>
+        <span class="party-member">Healthcare Worker</span>
+        <span class="party-member">Influencer</span>
+        <span class="party-member">Conspiracy Theorist</span>
+        <span class="party-member">Cultist</span>
+      </div>
+    </div>
+
+    <div class="death-marquee">
+      <div class="death-marquee-track">
+        <span>died of despair</span>
+        <span>was lost to the algorithm</span>
+        <span>succumbed to microplastics</span>
+        <span>was replaced by a chatbot</span>
+        <span>died doing their own research</span>
+        <span>was taken (nobody noticed for three days)</span>
+        <span>looked upon the Old One and went mad (meds were out of network)</span>
+        <span>died of ontological shock after a Pentagon press conference</span>
+        <span>ascended to a higher plane of existence (rent was due)</span>
+        <span>was consumed by Nyarlathotep (left a Yelp review)</span>
+        <span>perished in the doomscroll</span>
+        <span>was crushed by student debt (literally)</span>
+      </div>
+    </div>
+
+    <div class="cta">
+      <button class="cta-button" disabled>BEGIN THE TRAIL</button>
+    </div>
+
+    <div class="status">
+      Status: <span class="blink">IN DEVELOPMENT</span> · ETA: When the polycrisis allows
+    </div>
+  </div>
+
+  <footer>
+    <a href="https://github.com/KyleBruce/polycrisis-trail">GitHub</a> · 
+    <a href="https://github.com/KyleBruce/polycrisis-trail/blob/main/DESIGN.md">Design Doc</a> · 
+    Built with existential dread
+  </footer>
+</body>
+</html>
