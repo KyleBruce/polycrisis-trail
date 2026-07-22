@@ -4,7 +4,62 @@ A satirical Oregon Trail clone where you're just trying to survive 2026. The pol
 
 ## Premise
 
-Cross the hellscape of modern existence from January to December. Every month is a landmark on the trail. Everything wants to kill you. Now featuring all crises active simultaneously: the climate you ignored, the aliens nobody will confirm, the cosmic horrors rising from the deep, and more. Everything on fire at once. That's the joke.
+Cross the hellscape of modern existence from January to December. Every month is a landmark on the trail. Everything wants to kill you. Seven overlapping apocalypses, one year, zero mercy. Everything on fire at once. That's the joke.
+
+## Starting the Trail
+
+The opening sequence mirrors Oregon Trail's "buy supplies at Matt's General Store" but reframed as pre-apocalypse preparation. Four screens, one loadout, then the trail begins.
+
+### Screen 1: Starting Class
+
+Choose your party's economic starting position. This sets initial Money, Class stat, and available party member options.
+
+| Position | Starting Money | Starting Class | Perk | Vibe |
+|---|---|---|---|---|
+| **Trust Fund** | $50,000 | 8 | Venture Capitalist unlocked. Morale penalty for everyone else. | Easy mode. Boring. |
+| **Upper Middle** | $12,000 | 6 | Tech Bro unlocked. Starts with "AI-insulated" buff. | Comfortable start, fragile. |
+| **Working Class** | $3,000 | 4 | Gig Worker + Essential Worker unlocked. Stamina bonus. | The standard polycrisis experience. |
+| **Drowning** | $500 | 2 | Debt Slave unlocked. All party members start with +10 Stamina. Also -$5,000 debt. | Hard mode. Probably the most realistic. |
+
+### Screen 2: Choose Your Party
+
+Pick 4 party members from the roster. Each shows a card with:
+
+- **Job title** and emoji
+- **Core stats:** Health, Stamina, starting Morale contribution
+- **Special trait:** theme-specific ability (e.g., Healthcare Worker: "Reduces party Infection by 5/month")
+- **Synergy hints:** hidden bonuses when combined with specific other members
+  - Example: Gig Worker + Teacher = "Unionize" event available
+  - Example: Tech Bro + AI Researcher = "The AI is your fault" debuff to both
+  - Example: Conspiracy Theorist + Cultist = "They're working together." (They're not. Or are they?)
+  - Example: Venture Capitalist + Debt Slave = VC events drain Debt Slave's Hope faster
+
+Party composition determines which mini-games appear, which events are surmountable, and which endings are possible. No party can handle all seven themes equally — you choose which apocalypse you're least equipped for.
+
+### Screen 3: Name Your Party
+
+Classic Oregon Trail prompt. Type names for all four members. Default names are their job titles if skipped.
+
+When a party member dies, their name appears on the tombstone. Future runs can find those tombstones.
+
+### Screen 4: New Year's Resolutions
+
+January. You have **10 Time tokens** to allocate across preparations. Each token represents a week of focused effort before the polycrisis fully activates.
+
+| Resolution | Cost | Effect |
+|---|---|---|
+| **Stockpile Supplies** | 1-4 tokens | +4 Supplies per token. Boring. Necessary. |
+| **Build Emergency Fund** | 1-3 tokens | +$1,000 per token. Money is armor. |
+| **Get in Shape** | 1-3 tokens | +5 max Health per token to weakest party member. |
+| **Go to Therapy** | 1-2 tokens | +10 starting Sanity per token. Not covered by insurance after month 1. |
+| **Doomscroll Prep** | 1-2 tokens | See 3 random future events before they happen. -15 Morale. You can't unsee it. |
+| **Community Organizing** | 2 tokens | Unlocks "mutual aid" option during supply chain events. Requires Teacher or Gig Worker in party. |
+| **Learn a Trade** | 2 tokens | Party member gains "Handy" buff. Repair events 50% cheaper. |
+| **Buy a Gun** | 1-3 tokens | Survive one "hostile encounter" event per token owned. Makes some crisis events worse. American difficulty modifier. |
+
+Unspent tokens are lost. The resolution screen has a timer — the deadline is January 31st. Indecision costs you.
+
+After allocation, the trail begins. February loads. The first crisis event fires immediately.
 
 ## Crisis Themes
 
