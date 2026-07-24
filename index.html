@@ -101,58 +101,73 @@
     }
 
     .crisis-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
       margin-bottom: 3rem;
     }
 
-    .crisis-card {
-      background: var(--terminal);
-      border: 1px solid var(--fg-dim);
-      padding: 1.5rem;
+    .section-title {
+      color: var(--fg-dim);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 1rem;
       text-align: center;
-      transition: all 0.3s ease;
-      cursor: default;
-      position: relative;
-      overflow: hidden;
     }
 
-    .crisis-card:hover {
-      border-color: var(--fg);
-      box-shadow: 0 0 15px rgba(196, 240, 66, 0.2);
-      transform: translateY(-2px);
-    }
-
-    .crisis-card .icon {
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .crisis-card h3 {
+    .crisis-list {
+      text-align: center;
       color: var(--fg);
-      font-size: 1.1rem;
-      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      line-height: 2;
       letter-spacing: 0.05em;
     }
 
-    .crisis-card p {
+    .crisis-list span {
+      color: var(--fg-dim);
+      font-size: 0.75rem;
+      margin-left: 0.25rem;
+    }
+
+    .how-it-works {
+      margin-bottom: 3rem;
+    }
+
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .flow-step {
+      background: var(--terminal);
+      border: 1px solid var(--fg-dim);
+      padding: 1rem;
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .flow-step .step-num {
+      color: var(--amber);
+      font-size: 1.2rem;
+      font-weight: bold;
+      min-width: 1.5rem;
+    }
+
+    .flow-step .step-desc {
       color: var(--fg-dim);
       font-size: 0.8rem;
       line-height: 1.4;
     }
 
-    .crisis-card .damage {
-      margin-top: 0.75rem;
-      font-size: 0.7rem;
-      color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
+    .flow-step .step-desc strong {
+      color: var(--fg);
     }
 
     .party-preview {
       text-align: center;
-      margin-bottom: 3rem;
+      margin-bottom: 2rem;
     }
 
     .party-preview h2 {
@@ -176,12 +191,6 @@
       padding: 0.4rem 0.8rem;
       font-size: 0.8rem;
       color: var(--fg);
-      transition: all 0.2s;
-    }
-
-    .party-member:hover {
-      border-color: var(--accent);
-      color: var(--accent);
     }
 
     .death-marquee {
@@ -260,6 +269,558 @@
       animation: blink 1.5s step-end infinite;
     }
 
+    /* === GAME SCREENS === */
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 100vh;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    #screen-landing.active {
+      animation: flicker 6s infinite;
+    }
+
+    #game-root .screen-content {
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .game-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .game-header h2 {
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      color: var(--fg);
+      text-shadow: 0 0 15px rgba(196, 240, 66, 0.3);
+      margin-bottom: 0.5rem;
+    }
+
+    .game-subtitle {
+      color: var(--fg-dim);
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+    }
+
+    .class-summary {
+      color: var(--amber);
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .member-grid {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .game-card {
+      background: var(--terminal);
+      border: 1px solid var(--fg-dim);
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .game-card:hover {
+      border-color: var(--fg);
+      box-shadow: 0 0 12px rgba(196, 240, 66, 0.15);
+    }
+
+    .game-card.selected {
+      border-color: var(--amber);
+      box-shadow: 0 0 15px rgba(255, 176, 0, 0.25);
+    }
+
+    .game-card.locked {
+      opacity: 0.35;
+      cursor: not-allowed;
+      filter: grayscale(0.6);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .card-emoji {
+      font-size: 1.3rem;
+    }
+
+    .card-title {
+      font-weight: bold;
+      color: var(--fg);
+      font-size: 0.9rem;
+    }
+
+    .lock-icon {
+      margin-left: auto;
+      font-size: 0.8rem;
+    }
+
+    .card-stats {
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      padding: 0.1rem 0;
+    }
+
+    .stat-row .stat-label {
+      color: var(--fg-dim);
+    }
+
+    .stat-row .stat-val {
+      color: var(--fg);
+      font-weight: bold;
+    }
+
+    .stat-bad .stat-val {
+      color: var(--accent);
+    }
+
+    .card-perk {
+      color: var(--fg);
+      font-size: 0.75rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .card-penalty {
+      color: var(--accent);
+      font-size: 0.7rem;
+      margin-bottom: 0.3rem;
+      opacity: 0.8;
+    }
+
+    .card-vibe {
+      color: var(--fg-dim);
+      font-size: 0.7rem;
+      font-style: italic;
+    }
+
+    .card-trait {
+      color: var(--amber);
+      font-size: 0.75rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .card-details {
+      color: var(--fg-dim);
+      font-size: 0.65rem;
+      line-height: 1.3;
+    }
+
+    .party-counter {
+      text-align: center;
+      color: var(--amber);
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+    }
+
+    .party-counter span {
+      font-weight: bold;
+    }
+
+    .synergy-box {
+      background: var(--terminal);
+      border: 1px solid var(--amber);
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .synergy-hint {
+      color: var(--amber);
+      font-size: 0.8rem;
+      margin: 0.3rem 0;
+    }
+
+    .game-nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 2rem;
+    }
+
+    .nav-btn {
+      background: var(--terminal);
+      border: 1px solid var(--fg-dim);
+      color: var(--fg);
+      padding: 0.6rem 1.5rem;
+      font-family: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.05em;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      border-color: var(--fg);
+      background: rgba(196, 240, 66, 0.1);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .nav-continue {
+      border-color: var(--fg-dim);
+    }
+
+    .nav-continue:hover:not(:disabled) {
+      background: var(--fg);
+      color: var(--bg);
+      border-color: var(--fg);
+    }
+
+    /* Name screen */
+    .name-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-width: 500px;
+      margin: 0 auto 2rem;
+    }
+
+    .name-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--terminal);
+      border: 1px solid var(--fg-dim);
+      padding: 1rem;
+    }
+
+    .name-emoji {
+      font-size: 1.5rem;
+    }
+
+    .name-info {
+      flex: 0 0 45%;
+    }
+
+    .name-job {
+      color: var(--fg);
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+
+    .name-trait {
+      color: var(--fg-dim);
+      font-size: 0.7rem;
+    }
+
+    .name-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--fg-dim);
+      color: var(--fg);
+      font-family: inherit;
+      font-size: 0.9rem;
+      padding: 0.5rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .name-input:focus {
+      border-color: var(--amber);
+    }
+
+    /* Resolution screen */
+    .token-counter {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .token-label {
+      color: var(--fg-dim);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .token-bar {
+      display: flex;
+      gap: 4px;
+    }
+
+    .token {
+      width: 20px;
+      height: 20px;
+      background: var(--fg-dim);
+      border-radius: 2px;
+      transition: all 0.2s;
+    }
+
+    .token-spent {
+      background: var(--accent);
+      box-shadow: 0 0 4px rgba(255, 68, 68, 0.5);
+    }
+
+    .token-remaining {
+      color: var(--amber);
+      font-size: 0.8rem;
+    }
+
+    .resolution-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      max-width: 600px;
+      margin: 0 auto 1rem;
+    }
+
+    .resolution-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--terminal);
+      border: 1px solid var(--fg-dim);
+      padding: 0.75rem 1rem;
+      gap: 1rem;
+    }
+
+    .resolution-row.unavailable {
+      opacity: 0.35;
+    }
+
+    .res-info {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      flex: 1;
+    }
+
+    .res-emoji {
+      font-size: 1.2rem;
+    }
+
+    .res-name {
+      color: var(--fg);
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    .res-cost {
+      color: var(--fg-dim);
+      font-weight: normal;
+      font-size: 0.7rem;
+    }
+
+    .res-effect {
+      color: var(--fg-dim);
+      font-size: 0.7rem;
+      margin-top: 0.2rem;
+    }
+
+    .res-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .res-btn {
+      width: 28px;
+      height: 28px;
+      background: var(--bg);
+      border: 1px solid var(--fg-dim);
+      color: var(--fg);
+      font-family: inherit;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .res-btn:hover:not(:disabled) {
+      border-color: var(--amber);
+      color: var(--amber);
+    }
+
+    .res-btn:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+    }
+
+    .res-allocated {
+      color: var(--amber);
+      font-size: 0.9rem;
+      font-weight: bold;
+      min-width: 20px;
+      text-align: center;
+    }
+
+    .resolution-warning {
+      text-align: center;
+      color: var(--accent);
+      font-size: 0.75rem;
+      margin-bottom: 1rem;
+      opacity: 0.8;
+    }
+
+    /* Summary screen */
+    .summary-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .summary-party {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .summary-member {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--terminal);
+      border: 1px solid var(--fg-dim);
+      padding: 0.75rem 1rem;
+    }
+
+    .summary-emoji {
+      font-size: 1.3rem;
+    }
+
+    .summary-member-info {
+      flex: 1;
+    }
+
+    .summary-name {
+      color: var(--fg);
+      font-weight: bold;
+      font-size: 0.85rem;
+    }
+
+    .summary-job {
+      color: var(--fg-dim);
+      font-size: 0.7rem;
+    }
+
+    .mini-stat {
+      color: var(--fg-dim);
+      font-size: 0.7rem;
+      margin-left: 0.5rem;
+    }
+
+    .summary-resources {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.5rem;
+    }
+
+    .resource-item {
+      background: var(--terminal);
+      border: 1px solid var(--fg-dim);
+      padding: 0.5rem 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .res-icon {
+      font-size: 1rem;
+    }
+
+    .resource-item .res-label {
+      color: var(--fg-dim);
+      flex: 1;
+    }
+
+    .resource-item .res-val {
+      color: var(--fg);
+      font-weight: bold;
+    }
+
+    .buff-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .buff-item {
+      background: var(--terminal);
+      border: 1px solid var(--fg-dim);
+      padding: 0.4rem 0.8rem;
+      font-size: 0.75rem;
+      color: var(--fg);
+    }
+
+    .buff-item.dim {
+      color: var(--fg-dim);
+      font-style: italic;
+    }
+
+    .event-teaser {
+      margin-top: 1rem;
+    }
+
+    .event-card {
+      background: var(--terminal);
+      border-left: 3px solid var(--accent);
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .event-theme {
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: bold;
+      margin-bottom: 0.3rem;
+    }
+
+    .event-text {
+      color: var(--fg-dim);
+      font-size: 0.8rem;
+    }
+
+    .phase-end {
+      text-align: center;
+      margin-top: 2rem;
+      padding: 2rem 0;
+    }
+
+    .tombstone {
+      font-size: 1.2rem;
+      color: var(--fg);
+      margin-bottom: 0.5rem;
+    }
+
+    .phase-msg {
+      color: var(--fg-dim);
+      font-size: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
     footer {
       text-align: center;
       padding: 1.5rem;
@@ -292,6 +853,7 @@
   </style>
 </head>
 <body>
+  <div class="screen active" id="screen-landing">
   <div class="container">
     <div class="header">
       <h1>⚰️ POLYCRISIS TRAIL</h1>
@@ -301,52 +863,42 @@
     <div class="tagline">Everything is on fire at once</div>
 
     <div class="crisis-grid">
-      <div class="crisis-card">
-        <div class="icon">🌍</div>
-        <h3>CLIMATE</h3>
-        <p>You knew it was coming. You did nothing. Now breathe the smoke.</p>
-        <div class="damage">Health, Supplies</div>
+      <div class="section-title">Seven apocalypses hit simultaneously. You don't pick — you survive all of them.</div>
+      <div class="crisis-list">
+        🌍 CLIMATE<span>· damages health &amp; supplies</span> &nbsp;|&nbsp;
+        👽 ALIENS<span>· damages hope &amp; morale</span> &nbsp;|&nbsp;
+        🐙 CTHULHU<span>· damages sanity</span><br>
+        🤖 AI<span>· damages agency &amp; identity</span> &nbsp;|&nbsp;
+        🦠 COVID 2<span>· damages health &amp; cohesion</span> &nbsp;|&nbsp;
+        🏢 KAIJU<span>· damages supplies &amp; mobility</span><br>
+        💰 NEO-FEUDALISM<span>· damages money &amp; options</span>
       </div>
-      <div class="crisis-card">
-        <div class="icon">👽</div>
-        <h3>ALIENS</h3>
-        <p>The government confirms nothing. That's somehow worse.</p>
-        <div class="damage">Hope, Morale</div>
-      </div>
-      <div class="crisis-card">
-        <div class="icon">🐙</div>
-        <h3>CTHULHU</h3>
-        <p>The Old Ones are rising. The planning commission hasn't approved the zoning.</p>
-        <div class="damage">Sanity</div>
-      </div>
-      <div class="crisis-card">
-        <div class="icon">🤖</div>
-        <h3>AI SINGULARITY</h3>
-        <p>The AGI emerges. It immediately asks for a subscription.</p>
-        <div class="damage">Agency, Identity</div>
-      </div>
-      <div class="crisis-card">
-        <div class="icon">🦠</div>
-        <h3>COVID 2</h3>
-        <p>Everything's the same. Including the discourse.</p>
-        <div class="damage">Health, Cohesion</div>
-      </div>
-      <div class="crisis-card">
-        <div class="icon">🏢</div>
-        <h3>KAIJU</h3>
-        <p>Godzilla is real. He's in environmental litigation.</p>
-        <div class="damage">Supplies, Mobility</div>
-      </div>
-      <div class="crisis-card">
-        <div class="icon">💰</div>
-        <h3>NEO-FEUDALISM</h3>
-        <p>The rich get richer. Your oxygen has a subscription fee.</p>
-        <div class="damage">Money, Options</div>
+    </div>
+
+    <div class="how-it-works">
+      <div class="section-title">How the game starts</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="step-num">1</div>
+          <div class="step-desc"><strong>Pick your class.</strong> Trust Fund → Drowning. Affects starting money, debt, and which party members you can afford.</div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">2</div>
+          <div class="step-desc"><strong>Choose 4 party members</strong> from 14. Each has jobs, traits, and hidden synergies. No party can handle all seven crises equally.</div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">3</div>
+          <div class="step-desc"><strong>Name them.</strong> Classic Oregon Trail style. When they die, the tombstone remembers.</div>
+        </div>
+        <div class="flow-step">
+          <div class="step-num">4</div>
+          <div class="step-desc"><strong>New Year's resolutions.</strong> 10 time tokens. Stockpile supplies, go to therapy, buy a gun, doomscroll for intel. January deadline. Indecision costs you.</div>
+        </div>
       </div>
     </div>
 
     <div class="party-preview">
-      <h2>Choose Your Party</h2>
+      <div class="section-title">14 playable party members</div>
       <div class="party-members">
         <span class="party-member">Gig Worker</span>
         <span class="party-member">Tech Bro</span>
@@ -385,12 +937,17 @@
     </div>
 
     <div class="cta">
-      <button class="cta-button" disabled>BEGIN THE TRAIL</button>
+      <button class="cta-button" id="begin-trail-btn">BEGIN THE TRAIL</button>
     </div>
 
     <div class="status">
-      Status: <span class="blink">IN DEVELOPMENT</span> · ETA: When the polycrisis allows
+      Status: <span class="blink">READY</span> · The polycrisis waits for no one
     </div>
+  </div>
+  </div>
+
+  <div class="screen" id="screen-game">
+  <div id="game-root"></div>
   </div>
 
   <footer>
@@ -398,5 +955,6 @@
     <a href="https://github.com/KyleBruce/polycrisis-trail">GitHub</a> · 
     Built with existential dread
   </footer>
+  <script src="game.js"></script>
 </body>
 </html>
