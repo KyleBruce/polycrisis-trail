@@ -1052,6 +1052,143 @@ const EVENTS = [
       { text: 'Skip the holidays', effects: { morale: -8, money: 50, hope: -5 }, reveal: 'You skip the holidays. Nobody notices. You\'re not sure if that\'s a relief or a tragedy. It\'s both. It\'s always both.' },
     ]
   },
+
+  // ============================================================
+  // BASE MINI-GAMES — Oregon Trail staples, reimagined
+  // ============================================================
+
+  // Hunting → Gig Hunting
+  {
+    id: 'mg-gig-hunting', themes: ['neo-feudalism', 'ai'], months: [3, 5, 7, 9, 11], weight: 5,
+    miniGame: true,
+    text: 'You need money. Time to hunt for gigs. The job board is a hellscape of scams, AI-written postings, and positions that require 10 years of experience in a technology released last Tuesday.',
+    steps: [
+      {
+        text: 'You scroll through the job board. Which gigs do you pursue?',
+        choices: [
+          { text: 'Apply for everything', effects: { morale: -5, health: -3 }, nextStep: 1, reveal: 'You submit 47 applications. 3 are to scams. 12 are rejected instantly by AI screening. The rest vanish into the void.' },
+          { text: 'Be selective', effects: { morale: -3 }, nextStep: 1, reveal: 'You find 3 real postings. One requires relocation to a city that no longer exists (kaiju). One pays in equity. One is actually a MLM.' },
+          { text: 'Drive rideshare', requires: ['gig-worker'], effects: { money: 200, health: -5 }, nextStep: 1, reveal: 'The Gig Worker drives. A passenger is their former manager. The manager doesn\'t tip. The manager never tipped.' },
+        ]
+      },
+      {
+        text: 'One gig responds. It\'s a "content creation opportunity." Payment: exposure. Do you:',
+        choices: [
+          { text: 'Take it', effects: { money: 0, morale: -8, hope: -3 }, nextStep: 2, reveal: 'You create content. The exposure is 12 views. 4 are bots. The bots are impressed. The humans are not.' },
+          { text: 'Negotiate for actual money', effects: { money: 100, morale: 3 }, nextStep: 2, reveal: 'You negotiate. They counter with a gift card. You counter with a firm no. They agree to $100. You feel like a union organizer. You are alone.' },
+          { text: 'Walk away', effects: { morale: 3, hope: -3 }, nextStep: 2, reveal: 'You walk. The gig goes to someone who will do it for exposure. They are grateful. They should not be.' },
+        ]
+      },
+      {
+        text: 'The gig economy has processed your labor. Final tally. Do you:',
+        choices: [
+          { text: 'Cash out immediately', effects: { money: 50, morale: -3 }, reveal: 'You cash out. The processing fee is $4.99. The transfer fee is $2.99. You receive $42.02. Your time was worth $42.02.' },
+          { text: 'Wait for direct deposit', effects: { money: 60, morale: 3 }, reveal: 'You wait 3 business days. The money arrives on Friday. It is gone by Saturday. The gig economy is efficient. At extracting.' },
+          { text: 'Gen Z optimizes the tax situation', requires: ['gen-z'], effects: { money: 80, morale: 5 }, reveal: 'The Gen Z member finds three deductions and a loophole. The loophole is technically legal. The IRS will close it in 6 months. For now, you profit.' },
+        ]
+      }
+    ]
+  },
+
+  // River Crossing → Fording Bureaucracy
+  {
+    id: 'mg-fording-bureaucracy', themes: ['neo-feudalism'], months: [3, 6, 9], weight: 4,
+    miniGame: true,
+    text: 'You need to renew a government document. The DMV. The passport office. The permit bureau. The bureaucracy river. You must ford it.',
+    steps: [
+      {
+        text: 'The government portal loads. It was designed in 2008. It requires Internet Explorer. Do you:',
+        choices: [
+          { text: 'Try the online portal', effects: { sanity: -5, morale: -3 }, nextStep: 1, reveal: 'The portal crashes after step 4 of 12. Your progress is lost. The portal suggests using a different browser. You are already using a different browser.' },
+          { text: 'Go in person', effects: { money: -50, health: -3, morale: -5 }, nextStep: 1, reveal: 'You arrive at 8 AM. There are 40 people ahead of you. The number dispenser is broken. Someone has written their own number on a Post-it. It is their third visit.' },
+          { text: 'Boomer knows the system', requires: ['boomer'], effects: { morale: 3 }, nextStep: 1, reveal: 'The Boomer remembers when the office accepted walk-ins. They march in, demand a supervisor, and get it done in 10 minutes. The system fears those who remember its origins.' },
+        ]
+      },
+      {
+        text: 'You\'re told you need additional documentation. Do you:',
+        choices: [
+          { text: 'Go get the documents', effects: { morale: -5, money: -30 }, nextStep: 2, reveal: 'You drive home. You drive back. You forgot the notarized copy. You drive home again. The office closes in 20 minutes. You drive faster.' },
+          { text: 'Argue about the requirements', effects: { sanity: -5, morale: -3 }, nextStep: 2, reveal: 'The clerk says the requirements are "standard." You ask where they\'re written. The clerk says "internally." You ask to see them. The clerk says that\'s internal.' },
+          { text: 'Disaster Prepper has a dossier', requires: ['disaster-prepper'], effects: { morale: 5, supplies: -1 }, nextStep: 2, reveal: 'The Prepper pulls out a folder. It contains every document, notarized, in triplicate, with a cover letter. The clerk is visibly frightened. The transaction completes in 4 minutes.' },
+        ]
+      },
+      {
+        text: 'Final step: the fee. Do you:',
+        choices: [
+          { text: 'Pay the fee', effects: { money: -80 } },
+          { text: 'Ask about fee waivers', effects: { money: -20, morale: 3 }, reveal: 'There IS a fee waiver. The form is 6 pages. The income threshold is $12,000/year. You qualify. Barely. The waiver saves you $60. The form took 45 minutes. Your time is worth less than minimum wage. This is the system working as intended.' },
+          { text: 'Come back later', effects: { morale: -8, hope: -3 }, reveal: 'You\'ll come back. You won\'t come back. The document expires. You needed it for something. You can\'t remember what. It doesn\'t matter now.' },
+        ]
+      }
+    ]
+  },
+
+  // Fishing → Side Hustle Fishing
+  {
+    id: 'mg-side-hustle-fishing', themes: ['neo-feudalism'], months: [4, 7, 10], weight: 4,
+    miniGame: true,
+    text: 'Side hustle time. Cast your line into the freelance marketplace. Some catches are real. Most are scams. All pay poorly.',
+    steps: [
+      {
+        text: 'What kind of gig are you fishing for?',
+        choices: [
+          { text: 'Freelance writing', effects: { morale: -3 }, nextStep: 1, reveal: 'The client wants 2000 words for $30. They want SEO optimization. They want "a tone that\'s like BuzzFeed but classy." They want revisions. Unlimited revisions.' },
+          { text: 'Task apps (TaskRabbit, etc)', effects: { health: -5 }, nextStep: 1, reveal: 'Available tasks: assemble IKEA furniture (3 hours, $40), clean a hoarder\'s apartment ($60, no time limit, bring gloves), move a piano ($80, no piano experience required).' },
+          { text: 'Gig Worker has connections', requires: ['gig-worker'], effects: { money: 150, morale: 3 }, nextStep: 1, reveal: 'The Gig Worker knows a guy. The guy needs a thing delivered. The thing is in a van. The van is not suspicious. The money is real. This is the gig economy\'s VIP tier.' },
+        ]
+      },
+      {
+        text: 'The gig is secured. But there\'s a complication. Do you:',
+        choices: [
+          { text: 'Power through', effects: { health: -5, morale: -3, money: 80 }, nextStep: 2, reveal: 'You finish the gig. It took twice as long as estimated. The client disputes the charge. You provide evidence. The platform sides with the client. You get half. You always get half.' },
+          { text: 'Quit and find another', effects: { morale: 3, money: -20 }, nextStep: 2, reveal: 'You quit. The next gig is worse. The next gig is always worse. You appreciate the first gig more in retrospect. This is the gig economy\'s lesson.' },
+          { text: 'Gen Z automates it', requires: ['gen-z'], effects: { money: 120, morale: 5, agency: -3 }, nextStep: 2, reveal: 'The Gen Z member uses AI to complete the gig in 20 minutes. The client is impressed. The platform flags the account for "suspicious efficiency." The future is here. It pays per task.' },
+        ]
+      },
+      {
+        text: 'Get paid. Do you:',
+        choices: [
+          { text: 'Cash out', effects: { money: 70 } },
+          { text: 'Reinvest in supplies', effects: { money: 20, supplies: 3 } },
+          { text: 'Buy lottery tickets', effects: { money: -10, morale: 5, hope: 3 }, reveal: 'You buy $10 in lottery tickets. You win $4. The house always wins. The house is the economy. You are not the house.' },
+        ]
+      }
+    ]
+  },
+
+  // Trading → Marketplace
+  {
+    id: 'mg-marketplace', themes: ['neo-feudalism', 'climate'], months: [5, 8, 11], weight: 4,
+    miniGame: true,
+    text: 'You have supplies to trade. The marketplace is a post-apocalyptic bazaar where everyone is lying about everything. Welcome to commerce.',
+    steps: [
+      {
+        text: 'What are you looking to trade?',
+        choices: [
+          { text: 'Sell supplies for cash', effects: { supplies: -3, money: 150 }, nextStep: 1, reveal: 'The buyer lowballs you. You counter. They threaten to walk. You accept their price. The supplies were worth more. You needed the money. This is every transaction.' },
+          { text: 'Trade supplies for medical supplies', effects: { supplies: -2, health: 5 }, nextStep: 1, reveal: 'The trader has antibiotics. Expired, but probably still effective. Probably. The expiration date is smudged. You trade anyway. Desperation is a strong negotiating position.' },
+          { text: 'Influencer streams the market', requires: ['influencer'], effects: { money: 100, supplies: -1 }, nextStep: 1, reveal: 'The Influencer live-streams the marketplace. Someone offers them a sponsorship. The sponsorship is for a survival bucket. The bucket contains 30 days of food and 0 days of dignity.' },
+        ]
+      },
+      {
+        text: 'A trader offers you a "special deal." Do you:',
+        choices: [
+          { text: 'Take the deal', effects: { money: -100, supplies: 2, sanity: -3 }, nextStep: 2, reveal: 'The deal was not special. The supplies are repackaged. The repackaging is professional. You\'ve been scammed. The scammer is already gone. The marketplace remembers nothing.' },
+          { text: 'Refuse', effects: { morale: 3 } },
+          { text: 'Conspiracy Theorist spots the scam', requires: ['conspiracy-theorist'], effects: { morale: 5, money: 50 }, nextStep: 2, reveal: 'The Conspiracy Theorist recognizes the trader from a Reddit thread about scammers. They call them out by name. The trader flees. You feel justice. It is brief. It is rare.' },
+          { text: 'Haggle aggressively', effects: { money: -50, supplies: 4, morale: -3 }, nextStep: 2, reveal: 'You haggle. It\'s brutal. You both hate it. You get a slightly better price. The trader spite-sells to you. Everyone loses. Commerce.' },
+        ]
+      },
+      {
+        text: 'Final transaction. The marketplace is closing. Do you:',
+        choices: [
+          { text: 'Buy extra supplies', effects: { money: -80, supplies: 5 } },
+          { text: 'Save your money', effects: { morale: 3 } },
+          { text: 'Invest in crypto', effects: { money: -200, morale: 5, sanity: -5 }, reveal: 'You buy $POLYCRISIS again. It goes up 40%. You feel smart. It goes down 80%. You feel like yourself. You hold. It goes to zero. You are your authentic self.' },
+        ]
+      }
+    ]
+  },
 ];
 
 // ============================================================
