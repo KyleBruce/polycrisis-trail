@@ -435,6 +435,22 @@ function beginTrail() {
 // --- Run state (separate from setup state) ---
 let run = null;
 
+// Events per month from the design doc's 12-month table.
+// More themes active = more events = the polycrisis.
+const EVENTS_PER_MONTH = {
+  2: 2,   // Feb: Cthulhu dreams + AGI rumors
+  3: 3,   // Mar: UAP footage + WHO pandemic + Pacific sonar
+  4: 3,   // Apr: Tornadoes + Innsmouth + Rent increase
+  5: 2,   // May: Wildfires + Mass layoffs
+  6: 4,   // Jun: Heat dome + Coastal anomalies + Summer surge + First emergence
+  7: 3,   // Jul: Congressional hearing + Healthcare denied + Cult recruitment
+  8: 3,   // Aug: Hurricane + AI content + Second emergence
+  9: 3,   // Sep: AI regulation + Debt compounds + Eldritch wellness
+  10: 2,  // Oct: October Surprise + Winter wave
+  11: 3,  // Nov: Supply chain + AGI announced + Third emergence
+  12: 2,  // Dec: Stars align + Wage theft
+};
+
 function initRun() {
   const cls = state.startingClass;
   const staminaMod = cls.staminaMod || 0;
@@ -483,8 +499,11 @@ function initRun() {
       handy: state.resolutions['learn-trade'] > 0,
       guns: state.resolutions['buy-gun'] || 0,
     },
+    eventQueue: [],       // multi-event per month
     currentEvent: null,
     currentChoices: null,
+    eventsThisMonth: 0,
+    totalEventsThisMonth: 0,
     gameOver: false,
   };
 
@@ -526,8 +545,10 @@ function applyEffects(effects) {
 }
 
 // --- Event drawing ---
-function drawEvent(monthNum) {
+function drawEvent(monthNum, excludeIds) {
+  const excluded = new Set(excludeIds || []);
   const eligible = EVENTS.filter(e => {
+    if (excluded.has(e.id)) return false;
     if (e.months && !e.months.includes(monthNum)) return false;
     return true;
   });
@@ -544,10 +565,128 @@ function drawEvent(monthNum) {
   return eligible[eligible.length - 1];
 }
 
-// --- Check if choice is available ---
+function drawMonthEvents(monthNum) {
+  const count = EVENTS_PER_MONTH[monthNum] || 1;
+  const drawn = [];
+  for (let i = 0; i < count; i++) {
+    const evt = drawEvent(monthNum, drawn.map(e => e.id));
+    if (evt) drawn.push(evt);
+  }
+  return drawn;
+}
+
+// --- Check if choice is available (party member requires) ---
 function isChoiceAvailable(choice) {
   if (!choice.requires) return true;
   return choice.requires.every(id => run.members.some(m => m.alive && m.id === id));
+}
+
+// --- THEME MECHANICS ---
+
+// Sanity < 20: corrupt choice text
+function corruptText(text) {
+  if (run.sanity >= 20) return text;
+  // Subtle wrongness
+  const corruptions = [
+    [/you/gi, 'Y̸o̵u'],
+    [/the/gi, 't̷h̷e'],
+    [/is/gi, '̶i̸s'],
+    [/not/gi, 'n̵o̵t'],
+    [/are/gi, '̷a̷r̷e'],
+    [/will/gi, 'w̷i̴l̸l'],
+  ];
+  let result = text;
+  for (const [pattern, replacement] of corruptions) {
+    if (Math.random() < 0.3) {
+      result = result.replace(pattern, replacement);
+    }
+  }
+  // Occasionally append something unsettling
+  if (Math.random() < 0.2) {
+    const suffixes = ['', '', '', ' .', ' ..?', ' ...', ' ̷d̷o̵ ̶y̸o̷u̴?'];
+    result += suffixes[Math.floor(Math.random() * suffixes.length)];
+  }
+  return result;
+}
+
+// Sanity < 20: reorder choices
+function maybeShuffleChoices(choices) {
+  if (run.sanity >= 20) return choices.map((c, i) => ({ ...c, origIdx: i }));
+  // Shuffle a copy, keep track of original indices
+  const indexed = choices.map((c, i) => ({ ...c, origIdx: i }));
+  for (let i = indexed.length - 1; i > 0; i--) {
+    if (Math.random() < 0.5) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indexed[i], indexed[j]] = [indexed[j], indexed[i]];
+    }
+  }
+  return indexed;
+}
+
+// Agency < 50: some choices auto-resolve. Below 30: one choice auto-selected.
+function getAgencyAutoChoice(choices) {
+  if (run.agency >= 50) return null;
+  // AI auto-selects the "most efficient" (first available) choice
+  const available = choices.filter(c => isChoiceAvailable(c));
+  if (available.length === 0) return null;
+  // Below 30, force the AI's pick
+  if (run.agency < 30) return available[0];
+  // 50-30: 40% chance AI picks for you
+  if (Math.random() < 0.4) return available[0];
+  return null;
+}
+
+// Class < 3: some choices locked. Below 1: only one choice visible.
+function isChoiceClassLocked(choice) {
+  if (run.classStat >= 3) return false;
+  // Lock choices that cost money (the expensive ones)
+  if (choice.effects && choice.effects.money && choice.effects.money < -200) {
+    if (run.classStat < 3) return true;
+  }
+  if (run.classStat < 1) {
+    // Below class 1: only the first available choice is unlocked
+    return true; // Caller handles picking which one stays unlocked
+  }
+  return false;
+}
+
+// Apply theme mechanics to choices and return processed list
+function processChoices(rawChoices) {
+  let choices = rawChoices.map((c, i) => ({ ...c, origIdx: i }));
+  
+  // Agency: AI may pre-select
+  const autoChoice = getAgencyAutoChoice(choices);
+  
+  // Sanity: shuffle and corrupt text
+  choices = maybeShuffleChoices(choices);
+  
+  // Class: lock expensive options
+  choices = choices.map(c => {
+    let locked = !isChoiceAvailable(c);
+    if (!locked && isChoiceClassLocked(c)) {
+      locked = true;
+    }
+    return {
+      ...c,
+      text: corruptText(c.text),
+      locked,
+      autoSelected: autoChoice && autoChoice.origIdx === c.origIdx,
+    };
+  });
+  
+  // If class < 1, unlock only the first available choice
+  if (run.classStat < 1) {
+    let foundUnlocked = false;
+    choices = choices.map(c => {
+      if (!c.locked && !foundUnlocked) {
+        foundUnlocked = true;
+        return c;
+      }
+      return { ...c, locked: true };
+    });
+  }
+  
+  return { choices, autoChoice };
 }
 
 // --- Death checks ---
@@ -634,20 +773,34 @@ function getEnding() {
 }
 
 // ============================================================
-// TRAIL UI RENDERING
+// TRAIL UI RENDERING (Phase 3: multi-event months + theme mechanics)
 // ============================================================
 
 function renderMonthScreen() {
   const month = MONTHS[run.monthIdx];
 
-  // Draw event for this month
-  const event = drawEvent(month.num);
-  run.currentEvent = event;
-  run.currentChoices = event ? event.choices.filter(c => true) : null; // Keep all; filter at render
+  // Draw all events for this month
+  if (run.eventQueue.length === 0) {
+    run.eventQueue = drawMonthEvents(month.num);
+    run.eventsThisMonth = 0;
+    run.totalEventsThisMonth = run.eventQueue.length;
+  }
 
-  // Build status bar
+  // Pop next event from queue
+  const event = run.eventQueue.shift();
+  run.currentEvent = event;
+  run.eventsThisMonth++;
+
+  // Build status bar with theme warnings
   const aliveMembers = run.members.filter(m => m.alive);
   const avgHealth = Math.round(aliveMembers.reduce((s, m) => s + m.health, 0) / aliveMembers.length);
+
+  const themeWarnings = [];
+  if (run.sanity < 20) themeWarnings.push('<span class="theme-warning sanity-warn">⚠ SANITY CRITICAL</span>');
+  if (run.agency < 30) themeWarnings.push('<span class="theme-warning agency-warn">⚠ AI OVERRIDE ACTIVE</span>');
+  else if (run.agency < 50) themeWarnings.push('<span class="theme-warning agency-warn">⚠ AGENCY ERODING</span>');
+  if (run.classStat < 3) themeWarnings.push('<span class="theme-warning class-warn">⚠ CLASS ' + run.classStat + ' — OPTIONS LIMITED</span>');
+  if (run.hope < 30) themeWarnings.push('<span class="theme-warning hope-warn">⚠ HOPE FAILING</span>');
 
   const statusBar = `
     <div class="status-bar">
@@ -656,20 +809,24 @@ function renderMonthScreen() {
       <div class="status-item"><span class="stat-icon">❤️</span> ${avgHealth}</div>
       <div class="status-item"><span class="stat-icon">😊</span> ${run.morale}</div>
       <div class="status-item"><span class="stat-icon">🕯️</span> ${run.hope}</div>
-      <div class="status-item"><span class="stat-icon">🧠</span> ${run.sanity}</div>
-      <div class="status-item"><span class="stat-icon">🤖</span> ${run.agency}</div>
+      <div class="status-item ${run.sanity < 20 ? 'stat-critical' : ''}"><span class="stat-icon">🧠</span> ${run.sanity}</div>
+      <div class="status-item ${run.agency < 30 ? 'stat-critical' : ''}"><span class="stat-icon">🤖</span> ${run.agency}</div>
     </div>
+    ${themeWarnings.length ? '<div class="theme-warnings">' + themeWarnings.join(' ') + '</div>' : ''}
   `;
 
-  const memberRow = aliveMembers.map(m => `
-    <div class="member-chip" title="${esc(m.customName)} — HP:${m.health} STA:${m.stamina} MOR:${m.morale} INF:${m.infection}">
-      <span class="chip-emoji">${m.emoji}</span>
-      <span class="chip-name">${esc(m.customName)}</span>
-      <span class="chip-hp">${m.health}</span>
-    </div>
-  `).join('');
+  const memberRow = aliveMembers.map(m => {
+    const infBadge = m.infection > 0 ? ` <span class="chip-inf">🦠${m.infection}</span>` : '';
+    return `
+      <div class="member-chip" title="${esc(m.customName)} — HP:${m.health} STA:${m.stamina} MOR:${m.morale} INF:${m.infection}">
+        <span class="chip-emoji">${m.emoji}</span>
+        <span class="chip-name">${esc(m.customName)}</span>
+        <span class="chip-hp">${m.health}</span>${infBadge}
+      </div>
+    `;
+  }).join('');
 
-  // Event display
+  // Event display with theme mechanics
   let eventHTML = '';
   if (event) {
     const themeBadges = event.themes.map(t => {
@@ -677,24 +834,36 @@ function renderMonthScreen() {
       return tm ? `<span class="theme-badge">${tm.emoji} ${tm.name}</span>` : '';
     }).join(' ');
 
-    const choices = event.choices.map((c, i) => {
-      const available = isChoiceAvailable(c);
+    const { choices, autoChoice } = processChoices(event.choices);
+    run.currentChoices = choices;
+    run.currentAutoChoice = autoChoice;
+
+    const eventText = run.sanity < 20 ? corruptText(event.text) : event.text;
+
+    const choicesHTML = choices.map((c, i) => {
       const reqText = c.requires ? ` <span class="choice-req">(${c.requires.map(id => {
         const pm = PARTY_MEMBERS.find(p => p.id === id);
         return pm ? pm.name : id;
       }).join(' + ')})</span>` : '';
+      const lockedIcon = c.locked ? '🔒 ' : '';
+      const autoIcon = c.autoSelected ? '🤖 ' : '';
       return `
-        <button class="choice-btn" ${!available ? 'disabled' : ''} onclick="makeChoice(${i})">
-          ${esc(c.text)}${reqText}
+        <button class="choice-btn ${c.autoSelected ? 'auto-selected' : ''}" ${c.locked ? 'disabled' : ''} onclick="makeChoice(${i})">
+          ${lockedIcon}${autoIcon}${esc(c.text)}${reqText}
         </button>
       `;
     }).join('');
 
+    const eventCounter = run.totalEventsThisMonth > 1
+      ? `<div class="event-counter">Event ${run.eventsThisMonth} of ${run.totalEventsThisMonth} this month</div>`
+      : '';
+
     eventHTML = `
       <div class="event-box">
+        ${eventCounter}
         <div class="event-themes">${themeBadges}</div>
-        <div class="event-text">${esc(event.text)}</div>
-        <div class="choices">${choices}</div>
+        <div class="event-text">${esc(eventText)}</div>
+        <div class="choices">${choicesHTML}</div>
       </div>
     `;
   } else {
@@ -702,7 +871,7 @@ function renderMonthScreen() {
   }
 
   setGameHTML(`
-    <div class="game-screen screen-content">
+    <div class="game-screen screen-content ${run.sanity < 20 ? 'insane' : ''} ${run.agency < 30 ? 'automated' : ''}">
       <div class="game-header">
         <h2>${month.name} 2026</h2>
         <p class="game-subtitle">Month ${run.monthIdx + 1} of 11 · The trail continues</p>
@@ -716,34 +885,45 @@ function renderMonthScreen() {
     </div>
   `);
   showScreen('game');
+
+  // If agency auto-selected a choice, highlight it after a delay
+  if (autoChoice) {
+    setTimeout(() => {
+      const btns = document.querySelectorAll('.choice-btn.auto-selected');
+      btns.forEach(b => b.classList.add('auto-flash'));
+    }, 800);
+  }
 }
 
 function makeChoice(idx) {
   const event = run.currentEvent;
   if (!event) return;
-  const choice = event.choices[idx];
-  if (!choice || !isChoiceAvailable(choice)) return;
+  const choice = run.currentChoices[idx];
+  if (!choice || choice.locked) return;
+
+  // Use origIdx to get the original choice data (before shuffling/corruption)
+  const originalChoice = event.choices[choice.origIdx];
 
   // Apply effects
-  applyEffects(choice.effects);
+  applyEffects(originalChoice.effects);
 
   // Log it
   run.log.push({
     month: MONTHS[run.monthIdx].name,
     event: event.text,
-    choice: choice.text,
-    effects: choice.effects,
-    reveal: choice.reveal || null,
+    choice: originalChoice.text,
+    effects: originalChoice.effects,
+    reveal: originalChoice.reveal || null,
   });
 
   // Check deaths
   const dead = checkDeaths();
 
   // Show outcome
-  renderOutcome(choice, dead);
+  renderOutcome(originalChoice, dead, choice.autoSelected);
 }
 
-function renderOutcome(choice, dead) {
+function renderOutcome(choice, dead, wasAutoSelected) {
   const month = MONTHS[run.monthIdx];
 
   // Build effect summary
@@ -765,6 +945,7 @@ function renderOutcome(choice, dead) {
     }
   }
 
+  const autoNote = wasAutoSelected ? '<div class="auto-note">🤖 This choice was auto-selected by the AI. You could have overridden it. Did you?</div>' : '';
   const revealHTML = choice.reveal ? `<div class="outcome-reveal">${esc(choice.reveal)}</div>` : '';
   const effectsHTML = effectParts.length ? `<div class="effect-list">${effectParts.join('')}</div>` : '';
 
@@ -784,9 +965,19 @@ function renderOutcome(choice, dead) {
   // Check game over
   const over = isGameOver();
 
-  const continueBtn = over
-    ? `<button class="nav-btn nav-continue" onclick="renderGameOver()">View Final Results →</button>`
-    : `<button class="nav-btn nav-continue" onclick="nextMonth()">Continue to ${run.monthIdx + 1 < MONTHS.length ? MONTHS[run.monthIdx + 1].name : '2027'} →</button>`;
+  // Check if more events this month
+  const hasMoreEvents = run.eventQueue.length > 0;
+
+  let continueBtn;
+  if (over) {
+    continueBtn = `<button class="nav-btn nav-continue" onclick="renderGameOver()">View Final Results →</button>`;
+  } else if (hasMoreEvents) {
+    continueBtn = `<button class="nav-btn nav-continue" onclick="renderMonthScreen()">Next event →</button>`;
+  } else {
+    const nextMonthName = run.monthIdx + 1 < MONTHS.length ? MONTHS[run.monthIdx + 1].name : '2027';
+    const isLastMonth = run.monthIdx + 1 >= MONTHS.length;
+    continueBtn = `<button class="nav-btn nav-continue" onclick="nextMonth()">Continue to ${nextMonthName} →</button>`;
+  }
 
   setGameHTML(`
     <div class="game-screen screen-content">
@@ -794,9 +985,10 @@ function renderOutcome(choice, dead) {
         <h2>${month.name} — Outcome</h2>
       </div>
       <div class="outcome-box">
-        <div class="outcome-choice">You chose: ${esc(choice.text)}</div>
+        <div class="outcome-choice">${wasAutoSelected ? '🤖 AI chose:' : 'You chose:'} ${esc(choice.text)}</div>
         ${effectsHTML}
         ${revealHTML}
+        ${autoNote}
       </div>
       ${deathHTML}
       <div class="game-nav">
@@ -813,6 +1005,8 @@ function nextMonth() {
   if (run.monthIdx >= MONTHS.length) {
     renderGameOver();
   } else {
+    // Clear event queue for new month
+    run.eventQueue = [];
     // Monthly upkeep: infection spread, supply drain
     monthlyUpkeep();
     renderMonthScreen();

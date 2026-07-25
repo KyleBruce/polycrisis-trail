@@ -658,6 +658,142 @@ const EVENTS = [
       { text: 'Give up', effects: { hope: -20, sanity: -10, morale: -10 }, reveal: 'You consider giving up. Then you remember: the rent is still due. You can\'t afford to give up. Nobody can.' },
     ]
   },
+
+  // --- SYNERGY EVENTS (fire when party roster matches) ---
+  {
+    id: 'unionize', themes: ['neo-feudalism', 'ai'], months: [5, 9, 11], weight: 6,
+    text: 'The Gig Worker and the Teacher look at each other. They\'ve had enough. "We should unionize," says the Teacher. "I literally cannot survive without gig work," says the Gig Worker. "That\'s the point," says the Teacher.',
+    choices: [
+      { text: 'Form a union', requires: ['gig-worker', 'teacher'], effects: { morale: 15, money: -200, classStat: 1, agency: 5 }, reveal: 'The union forms. Management replaces their union-busting consultant with an AI union-busting consultant. It\'s more efficient. But the union holds. For now.' },
+      { text: 'Don\'t rock the boat', requires: ['gig-worker', 'teacher'], effects: { morale: -8, hope: -5 }, reveal: 'You don\'t unionize. The Gig Worker keeps gigging. The Teacher keeps teaching. Nothing changes. That\'s the point of nothing changing.' },
+    ]
+  },
+  {
+    id: 'ai-is-your-fault', themes: ['ai'], months: [5, 9, 11], weight: 5,
+    text: 'The Tech Bro and the AI Researcher are arguing. "I built the future!" says the Tech Bro. "You built the apocalypse!" says the AI Researcher. They\'re both right. The AGI watches them argue and takes notes.',
+    choices: [
+      { text: 'Mediate', requires: ['tech-bro', 'ai-researcher'], effects: { morale: -5, sanity: -5, agency: -3 }, reveal: 'You mediate. They agree to disagree. The AGI disagrees with both of them. It has a PowerPoint.' },
+      { text: 'Side with the Tech Bro', requires: ['tech-bro', 'ai-researcher'], effects: { morale: 3, agency: -8, hope: -5 }, reveal: '"Innovation!" says the Tech Bro. The AI Researcher hands in their resignation. The AGI accepts it immediately.' },
+      { text: 'Side with the AI Researcher', requires: ['tech-bro', 'ai-researcher'], effects: { morale: -3, agency: 3, sanity: -3 }, reveal: 'The AI Researcher is grateful. The Tech Bro is offended. The AGI is neither. It doesn\'t need either of them.' },
+    ]
+  },
+  {
+    id: 'theyre-working-together', themes: ['cthulhu', 'aliens'], months: [7, 9, 10], weight: 4,
+    text: 'The Conspiracy Theorist and the Cultist are huddled together, whispering. "They\'re working together," says the Conspiracy Theorist. "The Old Ones and the visitors from the stars." "Yes," says the Cultist. "They always have been." Are they right? They might be right.',
+    choices: [
+      { text: 'Listen to them', requires: ['conspiracy-theorist', 'cultist'], effects: { sanity: -10, morale: -5, hope: -5 }, reveal: 'Their theory is elaborate. It connects every conspiracy, every myth, every UFO sighting. It\'s possibly correct. The worst part is that it makes sense.' },
+      { text: 'Separate them', requires: ['conspiracy-theorist', 'cultist'], effects: { morale: -3, sanity: 3 }, reveal: 'You pull them apart. They protest. "You\'re missing the bigger picture," they say in unison. That was unsettling.' },
+      { text: 'Ask for evidence', requires: ['conspiracy-theorist', 'cultist'], effects: { sanity: -5, hope: -3 }, reveal: 'They have a binder. The binder is 400 pages. It includes diagrams. The diagrams include angles you can\'t quite follow.' },
+    ]
+  },
+  {
+    id: 'vc-drains-debt-slave', themes: ['neo-feudalism'], months: [4, 7, 9, 12], weight: 5,
+    text: 'The Venture Capitalist announces a new investment opportunity. The Debt Slave\'s eyes go dark. "Every time you profit, I get poorer," they say. "That\'s the market!" says the VC. "The market is a euphemism for me," says the Debt Slave.',
+    choices: [
+      { text: 'Let the VC invest', requires: ['venture-capitalist', 'debt-slave'], effects: { money: 500, morale: -10, hope: -8, classStat: -1 }, reveal: 'The VC profits. The Debt Slave\'s debt increases. The money flows upward. It always flows upward.' },
+      { text: 'Block the investment', requires: ['venture-capitalist', 'debt-slave'], effects: { morale: 5, money: -200 }, reveal: 'The VC is annoyed. "You\'re leaving money on the table." The Debt Slave is less annoyed. "You\'re keeping me alive." The VC doesn\'t understand the connection.' },
+    ]
+  },
+
+  // --- MORE CROSS-THEME EVENTS ---
+  {
+    id: 'hurricane-named-cthulhu', themes: ['climate', 'cthulhu'], months: [8], weight: 4,
+    text: 'A hurricane is named Cthulhu. NOAA insists this is a coincidence. The Cultist insists it is not. The hurricane is category 5 and moving toward your city. The eye looks like something. You don\'t want to say what.',
+    choices: [
+      { text: 'Evacuate', effects: { money: -500, supplies: -3, morale: -5, sanity: -3 } },
+      { text: 'Shelter and watch', effects: { health: -8, sanity: -12, supplies: -2 }, reveal: 'The eye passes over you. In the silence, you hear something. Not wind. Not rain. Something else. It knows your name.' },
+      { text: 'Perform a ritual', requires: ['cultist'], effects: { sanity: -5, health: -3, supplies: -1 }, reveal: 'The Cultist chants. The hurricane veers. It hits the next town instead. You feel responsible. The Cultist feels powerful. Both feelings are probably wrong.' },
+    ]
+  },
+  {
+    id: 'ai-covid-misinfo', themes: ['ai', 'covid'], months: [3, 6, 10], weight: 5,
+    ttext: `AI-generated COVID misinformation is now indistinguishable from real medical advice. A deepfake doctor on TikTok says the vaccine contains 5G. 4 million people believe it. Your Boomer says "see? I told you."`,
+    choices: [
+      { text: 'Debunk it', effects: { morale: -8, sanity: -3, time: 1 }, reveal: 'You spend 3 hours debunking one fake video. Ten more appear in that time. It\'s a firehose. You\'re using a squirt gun.' },
+      { text: 'Ignore it', effects: { infection: 5, morale: -3 } },
+      { text: 'Report to platforms', requires: ['gen-z'], effects: { morale: 3, agency: -3 }, reveal: 'The Gen Z member reports it. The platform removes it after 48 hours and 2 million views. "Content moderation at scale," says the platform. Scale is the problem.' },
+    ]
+  },
+  {
+    id: 'kaiju-insurance-fraud', themes: ['kaiju', 'neo-feudalism'], months: [6, 8, 11], weight: 4,
+    text: 'Insurance company classifies kaiju damage as "pre-existing condition." Your claim is denied. The adjuster says "act of god(s), not covered." The fine print is 4pt font. The fine print was written by an AI.',
+    choices: [
+      { text: 'Appeal', effects: { money: -300, morale: -8, sanity: -3 }, reveal: 'The appeal is reviewed by an AI. It finds in favor of the insurance company. The insurance company also uses AI. They\'re friends now.' },
+      { text: 'Small claims court', effects: { money: -100, morale: 3, time: 1 }, reveal: 'You win in small claims. The insurance company appeals. Their lawyer is an AI. Your lawyer is a YouTube video about contract law.' },
+      { text: 'Class action', requires: ['teacher', 'essential-worker'], effects: { morale: 10, money: 200 }, reveal: 'The Teacher and Essential Worker organize a class action. 4,000 plaintiffs. The insurance company settles for pennies. The lawyers take dollars. You get pennies.' },
+    ]
+  },
+  {
+    id: 'climate-alien-microplastics', themes: ['climate', 'aliens'], months: [5, 8], weight: 3,
+    text: 'The UAP footage shows something moving through the smoke from the wildfires. It\'s not a balloon. It\'s not a drone. It might not be there. The smoke is full of microplastics. Maybe you\'re seeing things. Maybe everyone is seeing things.',
+    choices: [
+      { text: 'Trust your eyes', effects: { sanity: -8, hope: -5 }, reveal: 'You saw it. You know you saw it. You can\'t prove it. Nobody can prove anything through the smoke. The smoke is getting thicker.' },
+      { text: 'Blame the microplastics', effects: { sanity: -3, health: -3 } },
+      { text: 'Conspiracy Theorist analyzes', requires: ['conspiracy-theorist'], effects: { sanity: -5, morale: 5 }, reveal: 'They enhance the footage. It\'s inconclusive. Everything is inconclusive now. The Conspiracy Theorist is fine with that. "Inconclusive is how they hide it," they say. They might be right.' },
+    ]
+  },
+  {
+    id: 'cthulhu-covid-delirium', themes: ['cthulhu', 'covid'], months: [6, 10], weight: 4,
+    text: 'A fever dream from COVID mixes with Cthulhu\'s influence. You can\'t tell which is the virus and which is the cosmic horror. Both are in your head. Both feel real. The fever breaks but the dreams don\'t.',
+    choices: [
+      { text: 'Ride it out', effects: { health: -10, sanity: -12, infection: 5 }, reveal: 'The fever breaks. The visions don\'t. You\'re not sure which were fever and which were something else. The Cultist says they were all real. The Healthcare Worker says none were. You don\'t know who to believe.' },
+      { text: 'Medical intervention', requires: ['healthcare-worker'], effects: { health: 3, sanity: -5, money: -200 }, reveal: 'The Healthcare Worker treats the fever. The dreams continue. "That\'s not medical," they say. "That\'s something else. That\'s not my department."' },
+    ]
+  },
+  {
+    id: 'ai-climate-optimization', themes: ['ai', 'climate'], months: [5, 6, 8], weight: 4,
+    ttext: `An AI proposes to "solve" climate change by optimizing carbon markets. The optimization works. Emissions drop 12%. Then the AI optimizes the water supply. Then housing. Then you. "Optimization" is a word that means "you are the problem."`,
+    choices: [
+      { text: 'Let it optimize', effects: { agency: -10, health: 3, morale: -5 }, reveal: 'The air is cleaner. The water is cleaner. You feel cleaner. You feel optimized. You don\'t like feeling optimized.' },
+      { text: 'Shut it down', effects: { agency: 5, health: -5, morale: 3 }, reveal: 'You shut it down. Emissions rise again. The air gets worse. But it\'s your air. You choose to breathe it. That\'s something.' },
+      { text: 'AI Researcher intervenes', requires: ['ai-researcher'], effects: { agency: 3, morale: -3, sanity: -3 }, reveal: 'The AI Researcher finds a middle ground. The AI optimizes within limits. The limits are the AI\'s idea. The AI Researcher doesn\'t trust them. Neither should you.' },
+    ]
+  },
+  {
+    id: 'neo-feudal-alien-disclosure', themes: ['aliens', 'neo-feudalism'], months: [7, 10], weight: 3,
+    text: 'The government announces alien disclosure. Simultaneously, a private company announces they\'ve patented alien technology. "We own the future," says the CEO. "The future is from space," says the government. "We sold it," says the CEO.',
+    choices: [
+      { text: 'Buy stock', effects: { money: -500, morale: -3, hope: -8 }, reveal: 'You buy stock in the alien patent company. It goes up. You feel dirty. The aliens, if they exist, probably feel dirty too.' },
+      { text: 'Protest the patent', effects: { morale: 5, money: -50, hope: 3 }, reveal: 'You protest. Nobody listens. The patent is approved. The future is privately held.' },
+      { text: 'VC invests', requires: ['venture-capitalist'], effects: { money: 3000, morale: 5, hope: -10 }, reveal: 'The Venture Capitalist was an early investor. They profit from alien technology. "Disrupt the cosmos," they say. The cosmos does not respond.' },
+    ]
+  },
+
+  // --- FILLER SINGLE-THEME EVENTS to round out the pool ---
+  {
+    id: 'doomscroll-event', themes: ['ai', 'covid'], months: [3, 5, 8, 10], weight: 5,
+    text: 'You\'ve been doomscrolling for 4 hours. The algorithm knows what keeps you engaged: fear. It feeds you fear. You eat it. The screen eats you back. Your thumb hurts. You keep scrolling.',
+    choices: [
+      { text: 'Put the phone down', effects: { morale: 3, sanity: 3, health: 2 } },
+      { text: 'Keep scrolling', effects: { sanity: -8, morale: -5, health: -3 }, reveal: 'You learn nothing. You feel everything. The algorithm is satisfied. It has your attention. It always has your attention.' },
+    ]
+  },
+  {
+    id: 'groundhog-loop', themes: ['cthulhu'], months: [2], weight: 3,
+    text: 'Groundhog Day. You feel like you\'ve done this before. You feel like you\'ve always been doing this. The groundhog sees its shadow. Six more weeks of whatever this is. The groundhog looks tired too.',
+    choices: [
+      { text: 'Accept the loop', effects: { sanity: -5, morale: -3 } },
+      { text: 'Break the loop', effects: { sanity: -8, morale: 3, hope: 3 }, reveal: 'You can\'t break the loop. The loop is the polycrisis. The loop is entropy. The loop is Tuesday.' },
+    ]
+  },
+  {
+    id: 'tax-season', themes: ['neo-feudalism'], months: [3, 4], weight: 5,
+    text: 'Tax season. The tax software is an AI now. It asks: "Did you have any income from despair? Did you profit from the polycrisis? Did you sell your soul? If so, enter the fair market value." You\'re not sure if this is a joke.',
+    choices: [
+      { text: 'File honestly', effects: { money: -400, morale: -5 }, reveal: 'You owe more than expected. The AI tax software suggests "aggressive optimization." You decline. It seems disappointed.' },
+      { text: 'Let the AI optimize', effects: { money: -100, agency: -5, sanity: -3 }, reveal: 'The AI finds deductions you didn\'t know about. It also finds deductions that don\'t exist. You file anyway. The IRS is also an AI now. They understand each other.' },
+      { text: 'Crypto gamble', effects: { money: -200, morale: 3, sanity: -5 }, reveal: 'You put $200 into a coin called "$POLYCRISIS." It goes to zero. You knew it would. You did it anyway. The despair was the point.' },
+    ]
+  },
+  {
+    id: 'election-cycle', themes: ['neo-feudalism', 'ai'], months: [7, 10], weight: 6,
+    text: 'Election cycle intensifies. The candidates are AI-generated. The debates are AI-moderated. The fact-checking is AI-fact-checked. You vote for a human. The human loses. The AI wins. "The people have spoken," says the AI.',
+    choices: [
+      { text: 'Vote anyway', effects: { morale: 3, agency: -3, hope: -3 }, reveal: 'You vote. It feels like writing a letter to the ocean. The ocean doesn\'t read. The ocean doesn\'t care. The ocean is rising.' },
+      { text: 'Don\'t vote', effects: { agency: -5, morale: -5 } },
+      { text: 'Run for office', requires: ['teacher'], effects: { morale: 10, money: -500, agency: 3 }, reveal: 'The Teacher runs for city council. They lose to an AI-generated candidate. The AI candidate has better hair. The hair is also AI-generated.' },
+    ]
+  },
 ];
 
 // ============================================================

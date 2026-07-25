@@ -1087,3 +1087,132 @@
   border: 1px solid var(--fg-dim);
   line-height: 1.6;
     }
+
+    /* === PHASE 3: THEME MECHANICS === */
+
+    /* Theme warnings */
+    .theme-warnings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+    }
+
+    .theme-warning {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+    }
+
+    .sanity-warn {
+  color: #ff00ff;
+  background: rgba(255, 0, 255, 0.1);
+  border: 1px solid #ff00ff;
+  animation: flicker 3s infinite;
+    }
+
+    .agency-warn {
+  color: #00ffff;
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid #00ffff;
+    }
+
+    .class-warn {
+  color: var(--amber);
+  background: rgba(255, 176, 0, 0.1);
+  border: 1px solid var(--amber);
+    }
+
+    .hope-warn {
+  color: var(--accent);
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid var(--accent);
+  animation: blink 2s step-end infinite;
+    }
+
+    /* Critical stat highlight */
+    .stat-critical {
+  animation: blink 1.5s step-end infinite;
+    }
+
+    .stat-critical .stat-icon {
+  color: var(--accent);
+    }
+
+    /* Infection badge on member chips */
+    .chip-inf {
+  color: #ff6600;
+  font-size: 0.65rem;
+  margin-left: 0.2rem;
+    }
+
+    /* Event counter */
+    .event-counter {
+  color: var(--amber);
+  font-size: 0.7rem;
+  margin-bottom: 0.5rem;
+  text-align: right;
+    }
+
+    /* Auto-selected choice (AI override) */
+    .choice-btn.auto-selected {
+  border-color: #00ffff;
+  background: rgba(0, 255, 255, 0.05);
+  position: relative;
+    }
+
+    .choice-btn.auto-selected::before {
+  content: '🤖 AI SUGGESTS';
+  position: absolute;
+  top: -8px;
+  right: 8px;
+  font-size: 0.6rem;
+  background: #00ffff;
+  color: var(--bg);
+  padding: 1px 4px;
+  letter-spacing: 0.05em;
+    }
+
+    .choice-btn.auto-selected.auto-flash {
+  animation: auto-pulse 1s ease-in-out 3;
+    }
+
+    @keyframes auto-pulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(0, 255, 255, 0); }
+  50% { box-shadow: 0 0 15px rgba(0, 255, 255, 0.4); }
+    }
+
+    /* Auto-resolve note */
+    .auto-note {
+  color: #00ffff;
+  font-size: 0.75rem;
+  font-style: italic;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed #00ffff44;
+    }
+
+    /* Insanity mode: UI degrades */
+    .game-screen.insane {
+  animation: glitch 4s infinite;
+    }
+
+    .game-screen.insane .event-text {
+  text-shadow: 1px 0 #ff00ff, -1px 0 #00ffff;
+    }
+
+    .game-screen.insane .game-header h2 {
+  text-shadow: 2px 0 #ff00ff44, -2px 0 #00ffff44;
+    }
+
+    /* Automated mode: cold, clinical */
+    .game-screen.automated .event-box {
+  border-left-color: #00ffff;
+    }
+
+    .game-screen.automated .game-header h2 {
+  color: #00ffff;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    }
