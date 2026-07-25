@@ -1682,3 +1682,37 @@
     touch-action: manipulation;
   }
     }
+
+    /* === MINI-GAMES === */
+
+    .mini-game-box {
+      border-left: 3px solid var(--amber);
+    }
+
+    .mg-intro {
+      color: var(--amber);
+      font-size: 0.85rem;
+      font-style: italic;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px dashed var(--fg-dim);
+    }
+
+    .mg-step-indicator {
+      color: var(--fg-dim);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Ontological shock indicator on member chips */
+    .member-chip.shocked {
+      opacity: 0.5;
+      filter: grayscale(0.7);
+    }
+
+    .member-chip.shocked::after {
+      content: ' 😵';
+      font-size: 0.7rem;
+    }

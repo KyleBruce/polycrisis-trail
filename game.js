@@ -932,6 +932,7 @@ function renderMonthScreen() {
   const event = run.eventQueue.shift();
   run.currentEvent = event;
   run.eventsThisMonth++;
+  run.mgStep = undefined; // reset mini-game step
 
   // Build status bar with theme warnings
   const aliveMembers = run.members.filter(m => m.alive);
@@ -959,8 +960,9 @@ function renderMonthScreen() {
 
   const memberRow = aliveMembers.map(m => {
     const infBadge = m.infection > 0 ? ` <span class="chip-inf">🦠${m.infection}</span>` : '';
+    const shockedClass = m.shocked ? ' shocked' : '';
     return `
-      <div class="member-chip" title="${esc(m.customName)} — HP:${m.health} STA:${m.stamina} MOR:${m.morale} INF:${m.infection}">
+      <div class="member-chip${shockedClass}" title="${esc(m.customName)} — HP:${m.health} STA:${m.stamina} MOR:${m.morale} INF:${m.infection}${m.shocked ? ' · ONTOLOGICAL SHOCK' : ''}">
         <span class="chip-emoji">${m.emoji}</span>
         <span class="chip-name">${esc(m.customName)}</span>
         <span class="chip-hp">${m.health}</span>${infBadge}
@@ -976,38 +978,86 @@ function renderMonthScreen() {
       return tm ? `<span class="theme-badge">${tm.emoji} ${tm.name}</span>` : '';
     }).join(' ');
 
-    const { choices, autoChoice } = processChoices(event.choices);
-    run.currentChoices = choices;
-    run.currentAutoChoice = autoChoice;
+    if (event.miniGame) {
+      // MINI-GAME: render current step
+      if (run.mgStep === undefined) run.mgStep = 0;
+      const step = event.steps[run.mgStep];
+      
+      if (step) {
+        const { choices, autoChoice } = processChoices(step.choices);
+        run.currentChoices = choices;
+        run.currentAutoChoice = autoChoice;
+        run.currentIsMiniGameStep = true;
+        
+        const stepText = run.sanity < 20 ? corruptText(step.text) : step.text;
+        const introText = run.mgStep === 0 ? `<div class="mg-intro">${esc(event.text)}</div>` : '';
+        
+        const choicesHTML = choices.map((c, i) => {
+          const reqText = c.requires ? ` <span class="choice-req">(${c.requires.map(id => {
+            const pm = PARTY_MEMBERS.find(p => p.id === id);
+            return pm ? pm.name : id;
+          }).join(' + ')})</span>` : '';
+          const lockedIcon = c.locked ? '🔒 ' : '';
+          const autoIcon = c.autoSelected ? '🤖 ' : '';
+          return `
+            <button class="choice-btn ${c.autoSelected ? 'auto-selected' : ''}" ${c.locked ? 'disabled' : ''} onclick="makeChoice(${i})">
+              ${lockedIcon}${autoIcon}${esc(c.text)}${reqText}
+            </button>
+          `;
+        }).join('');
 
-    const eventText = run.sanity < 20 ? corruptText(event.text) : event.text;
+        const eventCounter = run.totalEventsThisMonth > 1
+          ? `<div class="event-counter">Event ${run.eventsThisMonth} of ${run.totalEventsThisMonth} this month</div>`
+          : '';
+        const stepIndicator = `<div class="mg-step-indicator">Step ${run.mgStep + 1} of ${event.steps.length}</div>`;
 
-    const choicesHTML = choices.map((c, i) => {
-      const reqText = c.requires ? ` <span class="choice-req">(${c.requires.map(id => {
-        const pm = PARTY_MEMBERS.find(p => p.id === id);
-        return pm ? pm.name : id;
-      }).join(' + ')})</span>` : '';
-      const lockedIcon = c.locked ? '🔒 ' : '';
-      const autoIcon = c.autoSelected ? '🤖 ' : '';
-      return `
-        <button class="choice-btn ${c.autoSelected ? 'auto-selected' : ''}" ${c.locked ? 'disabled' : ''} onclick="makeChoice(${i})">
-          ${lockedIcon}${autoIcon}${esc(c.text)}${reqText}
-        </button>
+        eventHTML = `
+          <div class="event-box mini-game-box">
+            ${eventCounter}
+            <div class="event-themes">${themeBadges}</div>
+            ${introText}
+            ${stepIndicator}
+            <div class="event-text">${esc(stepText)}</div>
+            <div class="choices">${choicesHTML}</div>
+          </div>
+        `;
+      }
+    } else {
+      // REGULAR EVENT
+      const { choices, autoChoice } = processChoices(event.choices);
+      run.currentChoices = choices;
+      run.currentAutoChoice = autoChoice;
+      run.currentIsMiniGameStep = false;
+
+      const eventText = run.sanity < 20 ? corruptText(event.text) : event.text;
+
+      const choicesHTML = choices.map((c, i) => {
+        const reqText = c.requires ? ` <span class="choice-req">(${c.requires.map(id => {
+          const pm = PARTY_MEMBERS.find(p => p.id === id);
+          return pm ? pm.name : id;
+        }).join(' + ')})</span>` : '';
+        const lockedIcon = c.locked ? '🔒 ' : '';
+        const autoIcon = c.autoSelected ? '🤖 ' : '';
+        return `
+          <button class="choice-btn ${c.autoSelected ? 'auto-selected' : ''}" ${c.locked ? 'disabled' : ''} onclick="makeChoice(${i})">
+            ${lockedIcon}${autoIcon}${esc(c.text)}${reqText}
+          </button>
+        `;
+      }).join('');
+
+      const eventCounter = run.totalEventsThisMonth > 1
+        ? `<div class="event-counter">Event ${run.eventsThisMonth} of ${run.totalEventsThisMonth} this month</div>`
+        : '';
+
+      eventHTML = `
+        <div class="event-box">
+          ${eventCounter}
+          <div class="event-themes">${themeBadges}</div>
+          <div class="event-text">${esc(eventText)}</div>
+          <div class="choices">${choicesHTML}</div>
+        </div>
       `;
-    }).join('');
-
-    const eventCounter = run.totalEventsThisMonth > 1
-      ? `<div class="event-counter">Event ${run.eventsThisMonth} of ${run.totalEventsThisMonth} this month</div>`
-      : '';
-
-    eventHTML = `
-      <div class="event-box">
-        ${eventCounter}
-        <div class="event-themes">${themeBadges}</div>
-        <div class="event-text">${esc(eventText)}</div>
-        <div class="choices">${choicesHTML}</div>
-      </div>
-    `;
+    }
   } else {
     eventHTML = `<div class="event-box"><div class="event-text">A quiet month. Nothing happens. You don\'t trust it.</div></div>`;
   }
@@ -1087,8 +1137,10 @@ function makeChoice(idx) {
     return;
   }
 
-  // Use origIdx to get the original choice data (before shuffling/corruption)
-  const originalChoice = event.choices[choice.origIdx];
+  // For mini-game steps, the choice is from step.choices, not event.choices
+  const originalChoice = run.currentIsMiniGameStep
+    ? event.steps[run.mgStep].choices[choice.origIdx]
+    : event.choices[choice.origIdx];
 
   // Apply effects with theme tracking
   applyEffectsWithTracking(originalChoice.effects, event.themes);
@@ -1106,12 +1158,105 @@ function makeChoice(idx) {
   // Check deaths
   const dead = checkDeaths();
 
+  // Mini-game: advance to next step or show outcome
+  if (run.currentIsMiniGameStep && originalChoice.nextStep !== undefined) {
+    const nextStepIdx = originalChoice.nextStep;
+    const isLastStep = nextStepIdx >= event.steps.length;
+    
+    // Show intermediate outcome
+    renderMiniGameOutcome(originalChoice, dead, () => {
+      if (!isGameOver()) {
+        if (isLastStep) {
+          // Mini-game complete — continue to next event or month
+          run.mgStep = undefined;
+          if (run.eventQueue.length > 0) {
+            renderMonthScreen();
+          } else {
+            // Check if more events or advance month
+            const hasMoreEvents = run.eventQueue.length > 0;
+            if (hasMoreEvents) {
+              renderMonthScreen();
+            } else {
+              const nextMonthName = run.monthIdx + 1 < MONTHS.length ? MONTHS[run.monthIdx + 1].name : '2027';
+              // Show continue button
+              renderOutcome(originalChoice, dead, choice.autoSelected);
+            }
+          }
+        } else {
+          // Advance to next step
+          run.mgStep = nextStepIdx;
+          renderMonthScreen();
+        }
+      }
+    });
+    return;
+  }
+
   // If someone died, show tombstone screen first
   if (dead.length > 0 && !isGameOver()) {
     renderTombstone(dead[0], originalChoice);
   } else {
     renderOutcome(originalChoice, dead, choice.autoSelected);
   }
+}
+
+function renderMiniGameOutcome(choice, dead, onContinue) {
+  const month = MONTHS[run.monthIdx];
+
+  const effectParts = [];
+  if (choice.effects) {
+    for (const [key, val] of Object.entries(choice.effects)) {
+      const labels = {
+        money: val >= 0 ? `+$${val}` : `-$${Math.abs(val)}`,
+        supplies: val >= 0 ? `+${val} supplies` : `-${Math.abs(val)} supplies`,
+        health: val >= 0 ? `+${val} HP` : `-${Math.abs(val)} HP`,
+        morale: val >= 0 ? `+${val} morale` : `-${Math.abs(val)} morale`,
+        hope: val >= 0 ? `+${val} hope` : `-${Math.abs(val)} hope`,
+        sanity: val >= 0 ? `+${val} sanity` : `-${Math.abs(val)} sanity`,
+        agency: val >= 0 ? `+${val} agency` : `-${Math.abs(val)} agency`,
+        classStat: val >= 0 ? `+${val} class` : `-${Math.abs(val)} class`,
+        infection: val >= 0 ? `+${val} infection` : `${val} infection`,
+      };
+      if (labels[key]) effectParts.push(`<span class="effect-tag ${val >= 0 ? 'positive' : 'negative'}">${labels[key]}</span>`);
+    }
+  }
+
+  const revealHTML = choice.reveal ? `<div class="outcome-reveal">${esc(choice.reveal)}</div>` : '';
+  const effectsHTML = effectParts.length ? `<div class="effect-list">${effectParts.join('')}</div>` : '';
+
+  let deathHTML = '';
+  if (dead.length > 0) {
+    deathHTML = dead.map(d => `
+      <div class="death-notice">
+        <span class="death-emoji">⚰️</span>
+        <span class="death-name">${esc(d.customName)}</span>
+        <span class="death-cause">${esc(d.deathCause)}</span>
+        <span class="death-month">${esc(d.deathMonth)}</span>
+      </div>
+    `).join('');
+  }
+
+  setGameHTML(`
+    <div class="game-screen screen-content">
+      <div class="game-header">
+        <h2>${month.name} — Outcome</h2>
+      </div>
+      <div class="outcome-box">
+        <div class="outcome-choice">You chose: ${esc(choice.text)}</div>
+        ${effectsHTML}
+        ${revealHTML}
+      </div>
+      ${deathHTML}
+      <div class="game-nav">
+        <span></span>
+        <button class="nav-btn nav-continue" id="mg-continue-btn">Continue →</button>
+      </div>
+    </div>
+  `);
+  showScreen('game');
+  
+  const btn = document.getElementById('mg-continue-btn');
+  if (btn) btn.addEventListener('click', onContinue);
 }
 
 function renderOutcome(choice, dead, wasAutoSelected) {
@@ -1245,6 +1390,22 @@ function monthlyUpkeep() {
   const cultist = run.members.find(m => m.alive && m.id === 'cultist');
   if (cultist && Math.random() < 0.3) {
     run.morale = Math.max(0, run.morale - 3);
+  }
+
+  // Ontological shock: debuffed members are useless this month (no party-member bonuses)
+  // Clear last month's shock, apply new ones from alien events
+  run.members.forEach(m => {
+    if (m.shocked) {
+      m.shocked = false; // Clear previous month's shock
+    }
+  });
+  // 20% chance per alive member to get ontological shock if sanity < 40
+  if (run.sanity < 40) {
+    run.members.filter(m => m.alive).forEach(m => {
+      if (Math.random() < 0.15 && !m.id === 'conspiracy-theorist') {
+        m.shocked = true; // Useless this month
+      }
+    });
   }
 }
 

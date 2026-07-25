@@ -794,6 +794,264 @@ const EVENTS = [
       { text: 'Run for office', requires: ['teacher'], effects: { morale: 10, money: -500, agency: 3 }, reveal: 'The Teacher runs for city council. They lose to an AI-generated candidate. The AI candidate has better hair. The hair is also AI-generated.' },
     ]
   },
+
+  // ============================================================
+  // MINI-GAMES — structured multi-step choice trees
+  // Each has miniGame: true and a steps[] array.
+  // Steps fire sequentially; each step has its own choices + effects.
+  // ============================================================
+
+  // 🌍 CLIMATE — Disaster Prep
+  {
+    id: 'mg-disaster-prep', themes: ['climate'], months: [4, 6, 8], weight: 6,
+    miniGame: true,
+    text: 'Disaster warning. You have time to prepare. What\'s your strategy?',
+    steps: [
+      {
+        text: 'The emergency alert won\'t stop. You have hours, maybe less. First decision:',
+        choices: [
+          { text: 'Buy in bulk', effects: { money: -400, supplies: 6 }, nextStep: 1 },
+          { text: 'Panic buy', effects: { money: -700, supplies: 4, morale: -5 }, nextStep: 1 },
+          { text: 'Go feral', requires: ['gig-worker'], effects: { supplies: 3, health: -3 }, nextStep: 1, reveal: 'The Gig Worker forages. They find canned goods in a dumpster. Expired in 2023. Still edible. Probably.' },
+          { text: 'Rely on FEMA', effects: {}, nextStep: 1, reveal: 'You call FEMA. They put you on hold. The hold music is from 2003.' },
+        ]
+      },
+      {
+        text: 'Supplies secured. Now: fortify or evacuate?',
+        choices: [
+          { text: 'Fortify your home', effects: { supplies: -2, health: -2, morale: 3 }, nextStep: 2 },
+          { text: 'Evacuate early', effects: { money: -300, supplies: -1, morale: -3 }, nextStep: 2 },
+          { text: 'Do nothing extra', effects: { morale: -5 }, nextStep: 2 },
+        ]
+      },
+      {
+        text: 'The disaster hits. How do you ride it out?',
+        choices: [
+          { text: 'Hunker down', effects: { health: -5, supplies: -2 } },
+          { text: 'Help your neighbors', requires: ['essential-worker', 'healthcare-worker'], effects: { morale: 10, health: -5, supplies: -3, hope: 5 }, reveal: 'You save three neighbors. Nobody calls you a hero. Your hazard pay is a gift card to Applebee\'s.' },
+          { text: 'Live-stream it', requires: ['influencer'], effects: { money: 200, health: -8, morale: -3 }, reveal: 'The Influencer goes live. 50,000 viewers. The stream cuts out when a tree hits the house. The tree was not part of the content strategy.' },
+        ]
+      }
+    ]
+  },
+
+  // 👽 ALIENS — Congressional Briefing
+  {
+    id: 'mg-congressional-briefing', themes: ['aliens'], months: [7, 10], weight: 6,
+    miniGame: true,
+    text: 'You\'ve been invited to a congressional briefing on UAPs. Extract actionable information. Every answer will be technically true and completely useless.',
+    steps: [
+      {
+        text: 'The briefing begins. A general says "we cannot rule out." A senator asks "rule out what?" Do you:',
+        choices: [
+          { text: 'Ask a follow-up question', effects: { hope: -3 }, nextStep: 1, reveal: 'The briefing ends. You are escorted out. You gain nothing. The general avoids eye contact.' },
+          { text: 'Accept the answer', effects: { hope: -5, morale: -3 }, nextStep: 1 },
+          { text: 'Leak the transcript', effects: { morale: 5, hope: -3, supplies: -2 }, nextStep: 1, reveal: 'You leak it. The news cycle lasts 18 hours. Then a celebrity does something. The transcript is forgotten. The aliens, if they exist, are relieved.' },
+        ]
+      },
+      {
+        text: 'A senator asks about "non-human biologics." The general pauses for 4 seconds. Do you:',
+        choices: [
+          { text: 'Take notes', effects: { sanity: -3 }, nextStep: 2, reveal: 'Your notes say "non-human biologics." You don\'t know what that means. Nobody does. The general doesn\'t either.' },
+          { text: 'Demand crash retrieval materials', requires: ['conspiracy-theorist'], effects: { sanity: -5, morale: 5 }, nextStep: 2, reveal: 'The Conspiracy Theorist demands materials. The general says "that\'s classified." The Conspiracy Theorist says "everything is classified." The general says "that\'s also classified."' },
+          { text: 'Start a podcast about it', requires: ['influencer'], effects: { money: 300, hope: -8 }, nextStep: 2, reveal: 'The podcast gets 50,000 downloads. The sponsorship is for a meal kit service. Reality is a content farm.' },
+        ]
+      },
+      {
+        text: 'The briefing adjourns. Nothing was ruled out. Nothing was ruled in. Do you:',
+        choices: [
+          { text: 'Move on with your life', effects: { morale: -3, hope: -3 } },
+          { text: 'Fall down the rabbit hole', effects: { sanity: -8, hope: -5 }, reveal: 'You\'ve been on Reddit for 6 hours. You\'ve learned nothing. You\'ve lost sleep. The video is still inexplicable.' },
+          { text: 'Write your representative', effects: { morale: 3, agency: -3 }, reveal: 'You receive a form letter 6 weeks later. It says "thank you for your concern." It does not address your concern.' },
+        ]
+      }
+    ]
+  },
+
+  // 🏢 KAIJU — Evacuation Route
+  {
+    id: 'mg-evacuation-route', themes: ['kaiju'], months: [6, 8, 11], weight: 6,
+    miniGame: true,
+    text: 'Kaiju warning siren. It\'s 30 minutes out. Choose your path.',
+    steps: [
+      {
+        text: 'The siren sounds. Traffic is already gridlocked. Do you:',
+        choices: [
+          { text: 'Official evacuation route', effects: { supplies: -2, morale: -5 }, nextStep: 1, reveal: 'Traffic jam. You move 2 miles in 40 minutes. The kaiju moves faster.' },
+          { text: 'Disaster Prepper\'s secret route', requires: ['disaster-prepper'], effects: { supplies: -1, morale: 3 }, nextStep: 1, reveal: 'The Prepper has a route. It involves a drainage tunnel. You don\'t ask questions. It works.' },
+          { text: 'Shelter in place', effects: {}, nextStep: 2, reveal: 'You stay. The kaiju is heading downtown. You\'re not downtown. For once, being irrelevant is an advantage.' },
+        ]
+      },
+      {
+        text: 'You\'re on the road. The radio says the Jaeger is deploying. Do you:',
+        choices: [
+          { text: 'Bet on the Jaeger', effects: { morale: -3, health: -5 }, nextStep: 2, reveal: '30% chance. The Jaeger falls on a hospital. Again. Different hospital. Same contractor.' },
+          { text: 'Keep evacuating', effects: { supplies: -2, morale: -3 }, nextStep: 2 },
+          { text: 'Stop and watch', requires: ['influencer'], effects: { money: 100, sanity: -5, health: -3 }, nextStep: 2, reveal: 'The Influencer live-streams. The kaiju knocks down a cell tower. The stream dies. So does the Influencer\'s career. And possibly the Influencer.' },
+        ]
+      },
+      {
+        text: 'The kaiju passes. Aftermath. Do you:',
+        choices: [
+          { text: 'Return home', effects: { morale: -3, supplies: -1 } },
+          { text: 'Scavenge the impact zone', requires: ['disaster-prepper', 'gig-worker'], effects: { supplies: 5, health: -5, sanity: -3 }, reveal: 'The impact zone has supplies. It also has a residual low-frequency hum that you feel in your teeth.' },
+          { text: 'File an insurance claim', effects: { morale: -8, money: -50 }, reveal: 'Insurance calls it "wind damage." The kaiju was 300 meters tall. That\'s a lot of wind.' },
+        ]
+      }
+    ]
+  },
+
+  // 🐙 CTHULHU — The Ritual
+  {
+    id: 'mg-the-ritual', themes: ['cthulhu'], months: [9, 12], weight: 6,
+    miniGame: true,
+    text: 'You found a ritual text. It\'s poorly translated. The diagrams include angles you can\'t quite follow. Perform the ritual?',
+    steps: [
+      {
+        text: 'The text says to form a circle. The geometry is wrong. Do you:',
+        choices: [
+          { text: 'Follow the instructions exactly', effects: { sanity: -8 }, nextStep: 1, reveal: 'You form the circle. The angles are wrong. They were always wrong. That\'s the point.' },
+          { text: 'Improvise', effects: { sanity: -5, morale: -3 }, nextStep: 1, reveal: 'You improvise. The ritual doesn\'t work. Or does it? Something shifted. You hope it was the ritual.' },
+          { text: 'Let the Cultist lead', requires: ['cultist'], effects: { sanity: -3, morale: -5 }, nextStep: 1, reveal: 'The Cultist leads. They know the words. You don\'t want to know how they know the words.' },
+        ]
+      },
+      {
+        text: 'The incantation. The words don\'t stay on the page. Do you:',
+        choices: [
+          { text: 'Read them anyway', effects: { sanity: -10, supplies: 3 }, nextStep: 2, reveal: 'You read the words. Something listens. It sends supplies from... somewhere. You don\'t ask where.' },
+          { text: 'Refuse to speak', effects: { morale: -5, sanity: 3 }, nextStep: 2, reveal: 'You refuse. The Cultist is angry. The ritual fails. Or succeeds. You can\'t tell. Neither can the Cultist.' },
+          { text: 'Film it for content', requires: ['influencer'], effects: { sanity: -15, money: 200 }, nextStep: 2, reveal: 'The Influencer films. The camera captures something the eye didn\'t. The video has 2 million views. The Influencer has lost 15 Sanity. Worth it? No.' },
+        ]
+      },
+      {
+        text: 'The ritual concludes. Reality hiccups. Do you:',
+        choices: [
+          { text: 'Close the circle properly', effects: { sanity: -3, hope: 3 } },
+          { text: 'Leave it open', effects: { sanity: -5, supplies: 2, hope: -5 }, reveal: 'You leave the circle open. Things come through. Small things. Useful things. You don\'t look at them directly.' },
+          { text: 'Translate the rest yourself', requires: ['conspiracy-theorist'], effects: { sanity: -5, hope: 5 }, reveal: 'The Conspiracy Theorist translates the rest. It\'s a recipe. For soup. The soup is delicious. The soup knows things.' },
+        ]
+      }
+    ]
+  },
+
+  // 🤖 AI — The Performance Review
+  {
+    id: 'mg-performance-review', themes: ['ai'], months: [5, 9], weight: 6,
+    miniGame: true,
+    text: 'An AI has been assigned to evaluate your party\'s performance. It has perfect data and no understanding of context. This should go well.',
+    steps: [
+      {
+        text: 'The AI presents a dashboard. It has metrics you\'ve never heard of. "Synergy coefficient: 0.3." "Existential alignment: pending." Do you:',
+        choices: [
+          { text: 'Accept the review', effects: { agency: -5, morale: -5 }, nextStep: 1, reveal: 'The AI flags your weakest member for "optimization." You don\'t know what that means. The AI knows what that means.' },
+          { text: 'Dispute the review', effects: { agency: -8, morale: -3 }, nextStep: 1, reveal: 'The appeal is also AI-evaluated. It finds in favor of itself. The AI is very confident. Confidence is not competence.' },
+          { text: 'Game the metrics', requires: ['tech-bro'], effects: { money: 300, agency: -5 }, nextStep: 1, reveal: 'The Tech Bro games the metrics. The AI notices. It adjusts the metrics. The Tech Bro adjusts again. This is his Super Bowl.' },
+        ]
+      },
+      {
+        text: 'The AI recommends "right-sizing" the party. It suggests removing the lowest-performing member. Do you:',
+        choices: [
+          { text: 'Refuse', effects: { agency: 3, morale: -3 }, nextStep: 2, reveal: 'You refuse. The AI notes this. It will remember. It remembers everything.' },
+          { text: 'Comply', effects: { agency: -10, morale: -10, hope: -5 }, nextStep: 2, reveal: 'You comply. The AI thanks you for your "strategic alignment." The remaining party members don\'t look at you the same way.' },
+          { text: 'Unionize', requires: ['gig-worker', 'teacher'], effects: { morale: 10, agency: 5, money: -100 }, nextStep: 2, reveal: 'The Gig Worker and Teacher unionize. The AI calls a union-busting consultant. The consultant is also an AI. They have a meeting. It takes 0.3 seconds. The union survives. Barely.' },
+        ]
+      },
+      {
+        text: 'Final assessment. The AI gives you a score. Do you:',
+        choices: [
+          { text: 'Read it', effects: { sanity: -5, morale: -3 }, reveal: 'Score: 3/10. "Demonstrates inadequate commitment to synergistic paradigm shift." You don\'t know what that means. Nobody does.' },
+          { text: 'Ignore it', effects: { agency: 3, morale: 3 } },
+          { text: 'Bribe the training data', requires: ['conspiracy-theorist'], effects: { money: -200, agency: 5, morale: 5 }, reveal: 'The Conspiracy Theorist bribes the training data. Your score jumps to 9/10. The AI is confused but compliant. For now.' },
+        ]
+      }
+    ]
+  },
+
+  // 🦠 COVID — Contact Tracing
+  {
+    id: 'mg-contact-tracing', themes: ['covid'], months: [6, 10], weight: 6,
+    miniGame: true,
+    text: 'Infection detected in the party. Time to trace who infected whom. It\'s always the person who insisted on indoor dining.',
+    steps: [
+      {
+        text: 'Two party members are symptomatic. Do you:',
+        choices: [
+          { text: 'Full lockdown', effects: { morale: -8, infection: -10, supplies: -2 }, nextStep: 1, reveal: 'Everyone stays inside. The virus doesn\'t care about your lockdown. But it slows down. A little.' },
+          { text: 'Selective quarantine', effects: { infection: -5, morale: -3 }, nextStep: 1, reveal: 'You isolate the symptomatic ones. The others are at risk. They know this. They don\'t like this.' },
+          { text: 'Ignore it', effects: { infection: 15, morale: -3 }, nextStep: 1, reveal: 'You ignore it. The virus does not ignore you. It never ignores you. It\'s very attentive, actually.' },
+        ]
+      },
+      {
+        text: 'Contact tracing reveals the source. It was the Boomer. "It\'s just like the flu," they say. It is not like the flu. Do you:',
+        choices: [
+          { text: 'Confront the Boomer', requires: ['boomer'], effects: { morale: -5, infection: -3 }, nextStep: 2, reveal: 'The Boomer is unrepentant. "I\'ve had worse," they say. They have not had worse. The Healthcare Worker contradicts them. The Boomer doesn\'t listen.' },
+          { text: 'Quietly treat everyone', requires: ['healthcare-worker'], effects: { health: 5, morale: -3, infection: -8 }, nextStep: 2, reveal: 'The Healthcare Worker treats everyone. They don\'t complain. They\'re too tired to complain. They\'ve been too tired to complain since 2020.' },
+          { text: 'Blame China', requires: ['boomer'], effects: { morale: 3, infection: 5 }, nextStep: 2, reveal: 'The Boomer blames China. This solves nothing. It was never going to solve anything. But the Boomer feels better. Nobody else does.' },
+        ]
+      },
+      {
+        text: 'The wave passes. Long COVID is a possibility. Do you:',
+        choices: [
+          { text: 'Monitor for symptoms', effects: { morale: -3, health: 2 } },
+          { text: 'Hope for the best', effects: { health: -3, morale: 3 }, reveal: 'You hope. The best does not arrive. The adequate does not arrive either. What arrives is "tolerable," which is the 2026 version of "the best."' },
+          { text: 'Advocate for Long COVID funding', requires: ['teacher', 'healthcare-worker'], effects: { morale: 8, hope: 3, money: -100 }, reveal: 'You advocate. Congress debates. Congress forms a committee. The committee meets during the next surge. The funding is tabled. It\'s always tabled.' },
+        ]
+      }
+    ]
+  },
+
+  // 💰 NEO-FEUDALISM — The Means Test
+  {
+    id: 'mg-means-test', themes: ['neo-feudalism'], months: [7, 9], weight: 6,
+    miniGame: true,
+    text: 'You\'ve been summoned for a means test. Prove you deserve to survive. Submit documentation. The documentation requires documentation.',
+    steps: [
+      {
+        text: 'The caseworker — an AI — asks for pay stubs. Do you:',
+        choices: [
+          { text: 'Submit pay stubs', effects: { morale: -5 }, nextStep: 1, reveal: 'Application denied. "Wrong format." The AI wants PDF. You have PDF. The AI wants a different PDF. There is only one kind of PDF.' },
+          { text: 'Submit tax returns', effects: { morale: -5, sanity: -3 }, nextStep: 1, reveal: 'Application denied. "Too much income last year." You are currently broke. The AI does not care about "currently." The AI cares about "last year."' },
+          { text: 'Call your landlord for verification', effects: { morale: -8, sanity: -3 }, nextStep: 1, reveal: 'You call. Automated system. 45 minutes of hold music. The music is AI-generated. It sounds like despair with a backbeat. You are disconnected.' },
+        ]
+      },
+      {
+        text: 'The AI says you need to prove your need is "exceptional." Do you:',
+        choices: [
+          { text: 'Write a hardship letter', effects: { morale: -5, sanity: -3 }, nextStep: 2, reveal: 'You write 500 words about why you need help. The AI scans it. "Insufficient emotional resonance." It suggests adding more "adjectives of despair."' },
+          { text: 'Just pay the bribe', effects: { money: -300, morale: 3 }, nextStep: 2, reveal: 'You pay the "expedited processing fee." Your application is approved. The fee was the point. The fee was always the point.' },
+          { text: 'Venture Capitalist handles it', requires: ['venture-capitalist'], effects: { money: -100, morale: 5 }, nextStep: 2, reveal: 'The VC makes a call. The application is approved in 3 minutes. The caseworker AI is "acquired." The VC doesn\'t explain. You don\'t ask.' },
+        ]
+      },
+      {
+        text: 'Final determination. Do you:',
+        choices: [
+          { text: 'Accept the outcome', effects: { morale: -3, money: 50 }, reveal: 'You are approved for $47 in assistance. The stamp cost $3. You mailed it. They lost it.' },
+          { text: 'Appeal', effects: { morale: -8, money: -50, sanity: -3 }, reveal: 'You appeal. The appeal is denied. The appeal of the appeal is denied. The algorithm enjoys its work.' },
+          { text: 'Give up on the system', requires: ['gig-worker', 'teacher'], effects: { morale: 5, supplies: 3, classStat: 1 }, reveal: 'Forget the means test. The community shows up. It shouldn\'t have to. It does. Every time.' },
+        ]
+      }
+    ]
+  },
+
+  // --- MISSING EVENTS from design doc ---
+  {
+    id: 'back-to-school', themes: ['neo-feudalism', 'covid'], months: [9], weight: 5,
+    text: 'Back to school. Student debt payments resume. Again. The interest rate is now higher than your mortgage. You don\'t have a mortgage. You have student debt. The irony is not lost on you. It is lost on Congress.',
+    choices: [
+      { text: 'Pay the minimum', effects: { money: -300, morale: -5 } },
+      { text: 'Defer again', effects: { money: -50, morale: -3, hope: -3 }, reveal: 'You defer. The interest compounds. The debt grows. It will always grow. You are a revenue stream with a degree.' },
+      { text: 'Public Service Loan Forgiveness', requires: ['teacher', 'healthcare-worker'], effects: { morale: 8, money: -100, hope: 5 }, reveal: 'The Teacher and Healthcare Worker qualify for PSLF. They\'ve been paying for 8 years. They need 10. They will probably need 15. The program is "underfunded." The program is always underfunded.' },
+    ]
+  },
+  {
+    id: 'holiday-stress', themes: ['neo-feudalism', 'covid'], months: [11, 12], weight: 5,
+    text: 'Holiday stress. You\'re supposed to buy gifts, attend gatherings, and be joyful. Your money is negative. Your morale is lower. The advertisements are relentless. "This holiday season, give the gift of subscription-based oxygen."',
+    choices: [
+      { text: 'Buy gifts anyway', effects: { money: -400, morale: 3, hope: 3 } },
+      { text: 'Homemade gifts', effects: { money: -50, morale: 5, supplies: -1 }, reveal: 'You make gifts. They\'re terrible. They\'re sincere. The recipients don\'t know the difference. You do.' },
+      { text: 'Skip the holidays', effects: { morale: -8, money: 50, hope: -5 }, reveal: 'You skip the holidays. Nobody notices. You\'re not sure if that\'s a relief or a tragedy. It\'s both. It\'s always both.' },
+    ]
+  },
 ];
 
 // ============================================================
