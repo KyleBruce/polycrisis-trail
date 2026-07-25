@@ -976,6 +976,12 @@ function applyEffectsWithTracking(effects, themes) {
 function renderMonthScreen() {
   const month = MONTHS[run.monthIdx];
 
+  // If we're in the middle of a mini-game, render the current step directly
+  if (run.mgStep !== undefined && run.currentEvent && run.currentEvent.miniGame) {
+    renderMiniGameStep(run.currentEvent);
+    return;
+  }
+
   // Draw all events for this month
   if (run.eventQueue.length === 0) {
     run.eventQueue = drawMonthEvents(month.num);
@@ -988,6 +994,134 @@ function renderMonthScreen() {
   run.currentEvent = event;
   run.eventsThisMonth++;
   run.mgStep = undefined; // reset mini-game step
+
+  renderEventScreen(event);
+}
+
+function renderMiniGameStep(event) {
+  const month = MONTHS[run.monthIdx];
+  const aliveMembers = run.members.filter(m => m.alive);
+  const avgHealth = Math.round(aliveMembers.reduce((s, m) => s + m.health, 0) / aliveMembers.length);
+
+  const themeBadges = event.themes.map(t => {
+    const tm = THEMES[t];
+    return tm ? `<span class="theme-badge">${tm.emoji} ${tm.name}</span>` : '';
+  }).join(' ');
+
+  if (run.mgStep === undefined) run.mgStep = 0;
+  const step = event.steps[run.mgStep];
+  if (!step) return; // safety
+
+  const { choices, autoChoice } = processChoices(step.choices);
+  run.currentChoices = choices;
+  run.currentAutoChoice = autoChoice;
+  run.currentIsMiniGameStep = true;
+
+  const stepText = run.sanity < 20 ? corruptText(step.text) : step.text;
+  const introText = run.mgStep === 0 ? `<div class="mg-intro">${esc(event.text)}</div>` : '';
+
+  const choicesHTML = choices.map((c, i) => {
+    const reqText = c.requires ? ` <span class="choice-req">(${c.requires.map(id => {
+      const pm = PARTY_MEMBERS.find(p => p.id === id);
+      return pm ? pm.name : id;
+    }).join(' + ')})</span>` : '';
+    const lockedIcon = c.locked ? '🔒 ' : '';
+    const autoIcon = c.autoSelected ? '🤖 ' : '';
+    return `
+      <button class="choice-btn ${c.autoSelected ? 'auto-selected' : ''}" ${c.locked ? 'disabled' : ''} onclick="makeChoice(${i})">
+        ${lockedIcon}${autoIcon}${esc(c.text)}${reqText}
+      </button>
+    `;
+  }).join('');
+
+  const eventCounter = run.totalEventsThisMonth > 1
+    ? `<div class="event-counter">Event ${run.eventsThisMonth} of ${run.totalEventsThisMonth} this month</div>`
+    : '';
+  const stepIndicator = `<div class="mg-step-indicator">Step ${run.mgStep + 1} of ${event.steps.length}</div>`;
+
+  const themeWarnings = [];
+  if (run.sanity < 20) themeWarnings.push('<span class="theme-warning sanity-warn">⚠ SANITY CRITICAL</span>');
+  if (run.agency < 30) themeWarnings.push('<span class="theme-warning agency-warn">⚠ AI OVERRIDE ACTIVE</span>');
+  else if (run.agency < 50) themeWarnings.push('<span class="theme-warning agency-warn">⚠ AGENCY ERODING</span>');
+  if (run.classStat < 3) themeWarnings.push('<span class="theme-warning class-warn">⚠ CLASS ' + run.classStat + ' — OPTIONS LIMITED</span>');
+  if (run.hope < 30) themeWarnings.push('<span class="theme-warning hope-warn">⚠ HOPE FAILING</span>');
+
+  const statusBar = `
+    <div class="status-bar">
+      <div class="status-item"><span class="stat-icon">💰</span> $${run.money.toLocaleString()}</div>
+      <div class="status-item"><span class="stat-icon">📦</span> ${run.supplies}</div>
+      <div class="status-item"><span class="stat-icon">❤️</span> ${avgHealth}</div>
+      <div class="status-item"><span class="stat-icon">😊</span> ${run.morale}</div>
+      <div class="status-item"><span class="stat-icon">🕯️</span> ${run.hope}</div>
+      <div class="status-item ${run.sanity < 20 ? 'stat-critical' : ''}"><span class="stat-icon">🧠</span> ${run.sanity}</div>
+      <div class="status-item ${run.agency < 30 ? 'stat-critical' : ''}"><span class="stat-icon">🤖</span> ${run.agency}</div>
+    </div>
+    ${themeWarnings.length ? '<div class="theme-warnings">' + themeWarnings.join(' ') + '</div>' : ''}
+  `;
+
+  const memberRow = aliveMembers.map(m => {
+    const infBadge = m.infection > 0 ? ` <span class="chip-inf">🦠${m.infection}</span>` : '';
+    const shockedClass = m.shocked ? ' shocked' : '';
+    const automatedClass = m.automated ? ' automated' : '';
+    const longCovidClass = m.longCovid ? ' long-covid' : '';
+    const statusParts = [];
+    if (m.shocked) statusParts.push('ONTOLOGICAL SHOCK');
+    if (m.automated) statusParts.push('AUTOMATED');
+    if (m.longCovid) statusParts.push('LONG COVID');
+    const statusText = statusParts.length ? ' · ' + statusParts.join(' · ') : '';
+    return `
+      <div class="member-chip${shockedClass}${automatedClass}${longCovidClass}" title="${esc(m.customName)} — HP:${m.health} STA:${m.stamina} MOR:${m.morale} INF:${m.infection}${statusText}">
+        <span class="chip-emoji">${m.emoji}</span>
+        <span class="chip-name">${esc(m.customName)}</span>
+        <span class="chip-hp">${m.health}</span>${infBadge}
+      </div>
+    `;
+  }).join('');
+
+  const eventHTML = `
+    <div class="event-box mini-game-box">
+      ${eventCounter}
+      <div class="event-themes">${themeBadges}</div>
+      ${introText}
+      ${stepIndicator}
+      <div class="event-text">${esc(stepText)}</div>
+      <div class="choices">${choicesHTML}</div>
+    </div>
+  `;
+
+  setGameHTML(`
+    <div class="game-screen screen-content">
+      <div class="game-header">
+        <h2>${month.name}</h2>
+      </div>
+      ${statusBar}
+      <div class="party-row">${memberRow}</div>
+      ${eventHTML}
+      <div class="game-nav">
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  `);
+
+  showScreen('game');
+
+  // Agency: highlight auto-selected choice after delay
+  if (autoChoice) {
+    setTimeout(() => {
+      const btns = document.querySelectorAll('.choice-btn.auto-selected');
+      btns.forEach(b => b.classList.add('auto-flash'));
+    }, 800);
+  }
+}
+
+function renderEventScreen(event) {
+  // Mini-games delegate to renderMiniGameStep
+  if (event.miniGame) {
+    if (run.mgStep === undefined) run.mgStep = 0;
+    renderMiniGameStep(event);
+    return;
+  }
 
   // Build status bar with theme warnings
   const aliveMembers = run.members.filter(m => m.alive);
@@ -1040,58 +1174,13 @@ function renderMonthScreen() {
       return tm ? `<span class="theme-badge">${tm.emoji} ${tm.name}</span>` : '';
     }).join(' ');
 
-    if (event.miniGame) {
-      // MINI-GAME: render current step
-      if (run.mgStep === undefined) run.mgStep = 0;
-      const step = event.steps[run.mgStep];
-      
-      if (step) {
-        const { choices, autoChoice } = processChoices(step.choices);
-        run.currentChoices = choices;
-        run.currentAutoChoice = autoChoice;
-        run.currentIsMiniGameStep = true;
-        
-        const stepText = run.sanity < 20 ? corruptText(step.text) : step.text;
-        const introText = run.mgStep === 0 ? `<div class="mg-intro">${esc(event.text)}</div>` : '';
-        
-        const choicesHTML = choices.map((c, i) => {
-          const reqText = c.requires ? ` <span class="choice-req">(${c.requires.map(id => {
-            const pm = PARTY_MEMBERS.find(p => p.id === id);
-            return pm ? pm.name : id;
-          }).join(' + ')})</span>` : '';
-          const lockedIcon = c.locked ? '🔒 ' : '';
-          const autoIcon = c.autoSelected ? '🤖 ' : '';
-          return `
-            <button class="choice-btn ${c.autoSelected ? 'auto-selected' : ''}" ${c.locked ? 'disabled' : ''} onclick="makeChoice(${i})">
-              ${lockedIcon}${autoIcon}${esc(c.text)}${reqText}
-            </button>
-          `;
-        }).join('');
+    // REGULAR EVENT (mini-games handled by renderMiniGameStep at top of function)
+    const { choices, autoChoice } = processChoices(event.choices);
+    run.currentChoices = choices;
+    run.currentAutoChoice = autoChoice;
+    run.currentIsMiniGameStep = false;
 
-        const eventCounter = run.totalEventsThisMonth > 1
-          ? `<div class="event-counter">Event ${run.eventsThisMonth} of ${run.totalEventsThisMonth} this month</div>`
-          : '';
-        const stepIndicator = `<div class="mg-step-indicator">Step ${run.mgStep + 1} of ${event.steps.length}</div>`;
-
-        eventHTML = `
-          <div class="event-box mini-game-box">
-            ${eventCounter}
-            <div class="event-themes">${themeBadges}</div>
-            ${introText}
-            ${stepIndicator}
-            <div class="event-text">${esc(stepText)}</div>
-            <div class="choices">${choicesHTML}</div>
-          </div>
-        `;
-      }
-    } else {
-      // REGULAR EVENT
-      const { choices, autoChoice } = processChoices(event.choices);
-      run.currentChoices = choices;
-      run.currentAutoChoice = autoChoice;
-      run.currentIsMiniGameStep = false;
-
-      const eventText = run.sanity < 20 ? corruptText(event.text) : event.text;
+    const eventText = run.sanity < 20 ? corruptText(event.text) : event.text;
 
       const choicesHTML = choices.map((c, i) => {
         const reqText = c.requires ? ` <span class="choice-req">(${c.requires.map(id => {
@@ -1119,7 +1208,6 @@ function renderMonthScreen() {
           <div class="choices">${choicesHTML}</div>
         </div>
       `;
-    }
   } else {
     eventHTML = `<div class="event-box"><div class="event-text">A quiet month. Nothing happens. You don\'t trust it.</div></div>`;
   }
@@ -1232,20 +1320,13 @@ function makeChoice(idx) {
     renderMiniGameOutcome(originalChoice, dead, () => {
       if (!isGameOver()) {
         if (isLastStep) {
-          // Mini-game complete — continue to next event or month
+          // Mini-game complete — let renderOutcome handle the queue/month advancement
           run.mgStep = undefined;
-          if (run.eventQueue.length > 0) {
-            renderMonthScreen();
+          run.currentIsMiniGameStep = false;
+          if (dead.length > 0 && !isGameOver()) {
+            renderTombstone(dead[0], originalChoice);
           } else {
-            // Check if more events or advance month
-            const hasMoreEvents = run.eventQueue.length > 0;
-            if (hasMoreEvents) {
-              renderMonthScreen();
-            } else {
-              const nextMonthName = run.monthIdx + 1 < MONTHS.length ? MONTHS[run.monthIdx + 1].name : '2027';
-              // Show continue button
-              renderOutcome(originalChoice, dead, choice.autoSelected);
-            }
+            renderOutcome(originalChoice, dead, choice.autoSelected);
           }
         } else {
           // Advance to next step
