@@ -1424,8 +1424,13 @@ function monthlyUpkeep() {
   // If no supplies, health drains
   if (run.supplies === 0) {
     run.members.filter(m => m.alive).forEach(m => {
-      m.health = Math.max(0, m.health - 5);
+      m.health = Math.max(0, m.health - 8);
     });
+  }
+
+  // Low morale drains sanity (despair feeds madness)
+  if (run.morale < 20) {
+    run.sanity = Math.max(0, run.sanity - 2);
   }
 
   // Infection spread: infected members can spread to others
