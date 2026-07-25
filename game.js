@@ -26,11 +26,13 @@ function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 // SCREEN MANAGEMENT
 // ============================================================
 
-function showScreen(name) {
+function showScreen(name, preserveScroll) {
   $$('.screen').forEach(s => s.classList.remove('active'));
   const screen = document.getElementById('screen-' + name);
   if (screen) screen.classList.add('active');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (!preserveScroll) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 }
 
 function setGameHTML(html) {
@@ -270,7 +272,7 @@ function renderResolutions() {
       </div>
     </div>
   `);
-  showScreen('game');
+  showScreen('game', true); // preserve scroll on re-render
 }
 
 function isResolutionAvailable(r) {
