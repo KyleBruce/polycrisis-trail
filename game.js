@@ -613,10 +613,10 @@ function drawMonthEvents(monthNum) {
   return drawn;
 }
 
-// --- Check if choice is available (party member requires) ---
+// --- Check if choice is available (party member requires, shocked members can't help) ---
 function isChoiceAvailable(choice) {
   if (!choice.requires) return true;
-  return choice.requires.every(id => run.members.some(m => m.alive && m.id === id));
+  return choice.requires.every(id => run.members.some(m => m.alive && m.id === id && !m.shocked));
 }
 
 // --- THEME MECHANICS ---
@@ -1432,7 +1432,7 @@ function monthlyUpkeep() {
   // 20% chance per alive member to get ontological shock if sanity < 40
   if (run.sanity < 40) {
     run.members.filter(m => m.alive).forEach(m => {
-      if (Math.random() < 0.15 && !m.id === 'conspiracy-theorist') {
+      if (Math.random() < 0.15 && m.id !== 'conspiracy-theorist') {
         m.shocked = true; // Useless this month
       }
     });

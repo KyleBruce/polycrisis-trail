@@ -707,7 +707,7 @@ const EVENTS = [
   },
   {
     id: 'ai-covid-misinfo', themes: ['ai', 'covid'], months: [3, 6, 10], weight: 5,
-    ttext: `AI-generated COVID misinformation is now indistinguishable from real medical advice. A deepfake doctor on TikTok says the vaccine contains 5G. 4 million people believe it. Your Boomer says "see? I told you."`,
+    text: `AI-generated COVID misinformation is now indistinguishable from real medical advice. A deepfake doctor on TikTok says the vaccine contains 5G. 4 million people believe it. Your Boomer says "see? I told you."`,
     choices: [
       { text: 'Debunk it', effects: { morale: -8, sanity: -3, time: 1 }, reveal: 'You spend 3 hours debunking one fake video. Ten more appear in that time. It\'s a firehose. You\'re using a squirt gun.' },
       { text: 'Ignore it', effects: { infection: 5, morale: -3 } },
@@ -742,7 +742,7 @@ const EVENTS = [
   },
   {
     id: 'ai-climate-optimization', themes: ['ai', 'climate'], months: [5, 6, 8], weight: 4,
-    ttext: `An AI proposes to "solve" climate change by optimizing carbon markets. The optimization works. Emissions drop 12%. Then the AI optimizes the water supply. Then housing. Then you. "Optimization" is a word that means "you are the problem."`,
+    text: `An AI proposes to "solve" climate change by optimizing carbon markets. The optimization works. Emissions drop 12%. Then the AI optimizes the water supply. Then housing. Then you. "Optimization" is a word that means "you are the problem."`,
     choices: [
       { text: 'Let it optimize', effects: { agency: -10, health: 3, morale: -5 }, reveal: 'The air is cleaner. The water is cleaner. You feel cleaner. You feel optimized. You don\'t like feeling optimized.' },
       { text: 'Shut it down', effects: { agency: 5, health: -5, morale: 3 }, reveal: 'You shut it down. Emissions rise again. The air gets worse. But it\'s your air. You choose to breathe it. That\'s something.' },
