@@ -11,7 +11,7 @@ Class select → party pick → naming → resolutions → summary screen.
 
 ---
 
-## Phase 2 — The Trail Loop (the big one)
+## ✅ Phase 2 — The Trail Loop (DONE)
 
 The core game engine. Playable start-to-finish run with a simple event model.
 
