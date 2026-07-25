@@ -1388,3 +1388,125 @@
   font-size: 0.7rem;
   margin-bottom: 1rem;
     }
+
+    /* === PHASE 5: THE WEIRDNESS LAYER === */
+
+    /* Fever haze: low party health */
+    .game-screen.fever-haze {
+  position: relative;
+    }
+
+    .game-screen.fever-haze::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 100, 50, 0.08) 0%,
+    rgba(255, 50, 50, 0.12) 60%,
+    rgba(200, 0, 0, 0.18) 100%
+  );
+  pointer-events: none;
+  z-index: 99;
+  animation: fever-pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes fever-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+    }
+
+    .game-screen.fever-haze .event-text {
+  text-shadow: 0 0 4px rgba(255, 100, 50, 0.3);
+    }
+
+    /* Alien redaction: flickering black bars on text during alien events */
+    .game-screen.alien-redact .event-text {
+  position: relative;
+    }
+
+    .game-screen.alien-redact::before {
+  content: '[REDACTED]';
+  position: fixed;
+  top: 10px;
+  right: 15px;
+  color: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.9);
+  font-size: 0.6rem;
+  padding: 2px 6px;
+  z-index: 101;
+  animation: redact-flicker 4s infinite;
+  pointer-events: none;
+    }
+
+    @keyframes redact-flicker {
+  0%, 70%, 100% { opacity: 0; }
+  72%, 78% { opacity: 0.8; }
+  74%, 76% { opacity: 0; }
+  73%, 77% { opacity: 0.6; }
+    }
+
+    .game-screen.alien-redact .choice-btn:nth-child(odd) {
+  animation: text-redact 6s infinite;
+    }
+
+    @keyframes text-redact {
+  0%, 85%, 100% { filter: none; }
+  87%, 90% { filter: blur(1px); }
+    }
+
+    /* Kaiju screen shake */
+    .game-screen.kaiju-shake {
+  animation: kaiju-tremor 0.5s ease-in-out 3;
+    }
+
+    @keyframes kaiju-tremor {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-2px, 1px); }
+  40% { transform: translate(2px, -1px); }
+  60% { transform: translate(-1px, -2px); }
+  80% { transform: translate(1px, 2px); }
+    }
+
+    .game-screen.kaiju-shake .event-box {
+  border-left-color: #ff6600;
+  box-shadow: 0 0 20px rgba(255, 100, 0, 0.15);
+    }
+
+    /* Paywall banner for Class < 1 */
+    .paywall-banner {
+  background: linear-gradient(90deg, rgba(255,176,0,0.15), rgba(255,176,0,0.05), rgba(255,176,0,0.15));
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  font-size: 0.7rem;
+  text-align: center;
+  padding: 0.4rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: 0.05em;
+  animation: paywall-shimmer 3s ease-in-out infinite;
+    }
+
+    @keyframes paywall-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+    }
+
+    .game-screen.paywall-mode .event-text::after {
+  content: ' \00a0\00a0🔒';
+  color: var(--amber);
+    }
+
+    /* Combined insanity + fever: maximum chaos */
+    .game-screen.insane.fever-haze::after {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 0, 255, 0.08) 0%,
+    rgba(255, 50, 50, 0.12) 50%,
+    rgba(0, 255, 255, 0.1) 100%
+  );
+    }
+
+    /* Combined kaiju + insane: the screen barely holds together */
+    .game-screen.insane.kaiju-shake {
+  animation: kaiju-tremor 0.3s ease-in-out 5, glitch 2s infinite;
+    }

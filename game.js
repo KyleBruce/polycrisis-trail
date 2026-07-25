@@ -987,8 +987,27 @@ function renderMonthScreen() {
     eventHTML = `<div class="event-box"><div class="event-text">A quiet month. Nothing happens. You don\'t trust it.</div></div>`;
   }
 
+  // Determine visual mode classes for Phase 5 weirdness
+  const avgPartyHealth = Math.round(aliveMembers.reduce((s, m) => s + m.health, 0) / aliveMembers.length);
+  const hasAlienEvent = event && event.themes.includes('aliens');
+  const hasKaijuEvent = event && event.themes.includes('kaiju');
+  const visualClasses = [
+    run.sanity < 20 ? 'insane' : '',
+    run.agency < 30 ? 'automated' : '',
+    avgPartyHealth < 30 ? 'fever-haze' : '',
+    hasAlienEvent ? 'alien-redact' : '',
+    hasKaijuEvent ? 'kaiju-shake' : '',
+    run.classStat < 1 ? 'paywall-mode' : '',
+  ].filter(Boolean).join(' ');
+
+  // Paywall banner for Class < 1
+  const paywallBanner = run.classStat < 1
+    ? '<div class="paywall-banner">🔒 PREMIUM CONTENT LOCKED · UPGRADE YOUR CLASS TO ACCESS MORE OPTIONS</div>'
+    : '';
+
   setGameHTML(`
-    <div class="game-screen screen-content ${run.sanity < 20 ? 'insane' : ''} ${run.agency < 30 ? 'automated' : ''}">
+    <div class="game-screen screen-content ${visualClasses}">
+      ${paywallBanner}
       <div class="game-header">
         <h2>${month.name} 2026</h2>
         <p class="game-subtitle">Month ${run.monthIdx + 1} of 11 · The trail continues</p>

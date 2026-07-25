@@ -74,7 +74,7 @@ This is where the game earns its name. Multiple crises per month, and each theme
 
 ---
 
-## Phase 4 — Death, Tombstones & Endings
+## ✅ Phase 4 — Death, Tombstones & Endings (DONE)
 
 - **Death system:** per-theme death causes from DESIGN.md, context-aware selection (killed by what actually killed you).
 - **Tombstone screen:** name, cause, month, epitaph input field.
