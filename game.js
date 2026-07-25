@@ -1344,6 +1344,12 @@ function makeChoice(idx) {
     return;
   }
 
+  // Mini-game last step (no nextStep): clear mgStep so renderMonthScreen draws fresh events
+  if (run.currentIsMiniGameStep) {
+    run.mgStep = undefined;
+    run.currentIsMiniGameStep = false;
+  }
+
   // If someone died, show tombstone screen first
   if (dead.length > 0 && !isGameOver()) {
     renderTombstone(dead[0], originalChoice);
