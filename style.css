@@ -1216,3 +1216,175 @@
   color: #00ffff;
   text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
     }
+
+    /* === PHASE 4: TOMBSTONES, ENDINGS, SHARE CARD === */
+
+    /* Tombstone screen */
+    .tombstone-screen {
+  text-align: center;
+  padding: 2rem 1rem;
+    }
+
+    .tombstone-graphic {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+    }
+
+    .tombstone-graphic.small {
+  font-size: 2rem;
+    }
+
+    .tombstone-name {
+  color: var(--fg);
+  font-size: 1.4rem;
+  font-weight: bold;
+  margin-bottom: 0.3rem;
+    }
+
+    .tombstone-job {
+  color: var(--fg-dim);
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+    }
+
+    .tombstone-cause {
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-style: italic;
+  margin-bottom: 0.3rem;
+    }
+
+    .tombstone-month {
+  color: var(--fg-dim);
+  font-size: 0.75rem;
+  margin-bottom: 1.5rem;
+    }
+
+    .tombstone-epitaph-prompt {
+  color: var(--amber);
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+    }
+
+    .epitaph-input {
+  width: 100%;
+  max-width: 400px;
+  background: var(--bg);
+  border: 1px solid var(--fg-dim);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.6rem;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+    }
+
+    .epitaph-input:focus {
+  border-color: var(--amber);
+    }
+
+    .tombstone-actions {
+  margin-top: 1.5rem;
+    }
+
+    /* Epitaph display in fallen list */
+    .epitaph-display {
+  color: var(--fg-dim);
+  font-size: 0.7rem;
+  font-style: italic;
+  margin-top: 0.2rem;
+    }
+
+    /* Tombstone encounter */
+    .tombstone-encounter {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: var(--terminal);
+  border: 1px solid var(--fg-dim);
+  border-left: 3px solid var(--fg-dim);
+    }
+
+    .encounter-label {
+  color: var(--fg-dim);
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+    }
+
+    .tombstone-epitaph {
+  color: var(--amber);
+  font-size: 0.85rem;
+  font-style: italic;
+  margin: 0.5rem 0;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+    }
+
+    /* Theme damage bars */
+    .theme-damage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+    }
+
+    .theme-damage-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+    }
+
+    .theme-dmg-emoji {
+  font-size: 0.9rem;
+    }
+
+    .theme-dmg-name {
+  color: var(--fg-dim);
+  min-width: 120px;
+    }
+
+    .theme-dmg-bar {
+  flex: 1;
+  height: 12px;
+  background: var(--terminal);
+  border: 1px solid var(--fg-dim);
+  position: relative;
+    }
+
+    .theme-dmg-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  opacity: 0.7;
+    }
+
+    .theme-dmg-pct {
+  color: var(--fg);
+  font-weight: bold;
+  min-width: 35px;
+  text-align: right;
+    }
+
+    /* Share card */
+    .share-card {
+  background: var(--terminal);
+  border: 1px solid var(--fg-dim);
+  padding: 1rem;
+    }
+
+    .share-text {
+  font-family: inherit;
+  font-size: 0.75rem;
+  color: var(--fg);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+    }
+
+    .tombstone-count {
+  color: var(--fg-dim);
+  font-size: 0.7rem;
+  margin-bottom: 1rem;
+    }

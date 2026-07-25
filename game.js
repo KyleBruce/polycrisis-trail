@@ -693,22 +693,45 @@ function processChoices(rawChoices) {
 function checkDeaths() {
   const newlyDead = [];
 
-  // Health-based deaths
+  // Track what damaged each member most this run for context-aware death cause
   run.members.forEach(m => {
-    if (m.alive && m.health <= 0) {
+    if (!m.alive) return;
+    
+    // Health-based deaths
+    if (m.health <= 0) {
       m.alive = false;
-      m.deathCause = pickDeathCause('general');
+      m.deathCause = pickDeathCause(m.deathTheme || 'general');
       m.deathMonth = MONTHS[run.monthIdx].name;
       newlyDead.push(m);
+      return;
+    }
+    
+    // Infection deaths (high infection + chance)
+    if (m.infection >= 80 && Math.random() < 0.3) {
+      m.alive = false;
+      m.health = 0;
+      m.deathCause = pickDeathCause('covid');
+      m.deathMonth = MONTHS[run.monthIdx].name;
+      newlyDead.push(m);
+      return;
+    }
+    
+    // Sanity-based deaths (very low sanity + chance)
+    if (run.sanity <= 5 && Math.random() < 0.2) {
+      m.alive = false;
+      m.health = 0;
+      m.deathCause = pickDeathCause('cthulhu');
+      m.deathMonth = MONTHS[run.monthIdx].name;
+      newlyDead.push(m);
+      return;
     }
   });
 
-  // Hope-based game over
+  // Hope-based death: when hope hits 0, someone gives up
   if (run.hope <= 0 && run.members.some(m => m.alive)) {
-    // Hope 0 kills a random member
     const alive = run.members.filter(m => m.alive);
     if (alive.length > 0) {
- const victim = alive[Math.floor(Math.random() * alive.length)];
+      const victim = alive[Math.floor(Math.random() * alive.length)];
       victim.alive = false;
       victim.health = 0;
       victim.deathCause = 'died of despair';
@@ -718,16 +741,10 @@ function checkDeaths() {
     }
   }
 
-  // Infection deaths (high infection + low health)
-  run.members.forEach(m => {
-    if (m.alive && m.infection >= 80 && Math.random() < 0.3) {
-      m.alive = false;
-      m.health = 0;
-      m.deathCause = pickDeathCause('covid');
-      m.deathMonth = MONTHS[run.monthIdx].name;
-      newlyDead.push(m);
-    }
-  });
+  // Show tombstone screen for first death
+  if (newlyDead.length > 0) {
+    run.pendingTombstone = newlyDead[0];
+  }
 
   run.deadThisRun.push(...newlyDead);
   return newlyDead;
@@ -742,34 +759,134 @@ function isGameOver() {
   return !run.members.some(m => m.alive);
 }
 
-// --- Endings ---
+// --- Track damage by theme for context-aware death causes ---
+function trackDamageTheme(themes, damage) {
+  if (!themes || !damage) return;
+  // Track which theme is doing the most damage to the party
+  if (!run.themeDamage) run.themeDamage = {};
+  themes.forEach(t => {
+    run.themeDamage[t] = (run.themeDamage[t] || 0) + Math.abs(damage);
+  });
+}
+
+function getDominantTheme() {
+  if (!run.themeDamage) return null;
+  let max = 0, dominant = null;
+  for (const [theme, dmg] of Object.entries(run.themeDamage)) {
+    if (dmg > max) { max = dmg; dominant = theme; }
+  }
+  return dominant;
+}
+
+// --- All 12 endings from DESIGN.md ---
 function getEnding() {
   const survivors = run.members.filter(m => m.alive);
   const survivorCount = survivors.length;
+  const dominant = getDominantTheme();
+  
+  // Track damage by theme for ending determination
+  const themeDamage = run.themeDamage || {};
+  let maxDmg = 0, maxTheme = null;
+  for (const [t, d] of Object.entries(themeDamage)) {
+    if (d > maxDmg) { maxDmg = d; maxTheme = t; }
+  }
 
+  // Total party wipe
   if (survivorCount === 0) {
     return { id: 'total-wipe', name: 'Total Party Wipe', emoji: '💀',
       text: 'Everyone is dead. The polycrisis didn\'t even notice. Standard Oregon Trail experience.' };
   }
 
+  // Perfect run
   if (survivorCount === 4 && run.hope > 80 && run.sanity > 80 && run.agency > 80) {
     return { id: 'perfect-run', name: 'Perfect Run', emoji: '🏆',
       text: 'All four survivors. All stats above 80. Statistically impossible. Somebody cheated.' };
   }
 
+  // Ascension (sanity 0 but hope survived)
   if (run.sanity <= 0 && run.hope > 0) {
     return { id: 'ascension', name: 'Ascension', emoji: '🌀',
       text: 'Sanity hit 0, but Hope survived. You didn\'t die. You became something else. The save file is corrupted.' };
   }
 
+  // Good timeline
   if (run.hope > 50 && run.sanity > 50 && run.agency > 50 && survivorCount >= 3) {
     return { id: 'good-timeline', name: 'The Good Timeline', emoji: '🌟',
       text: 'You\'re not okay but you\'re okay-er than most. 3+ survivors, stats holding. Take the win.' };
   }
 
+  // Themed endings based on dominant damage
+  if (maxTheme === 'climate') {
+    return { id: 'climate-victory', name: 'Climate Victory', emoji: '🌍',
+      text: 'Climate events were the biggest drain. Planet\'s still dying but YOU lived. Lucky? Yes. Hero? No.' };
+  }
+  if (maxTheme === 'aliens') {
+    return { id: 'disclosure', name: 'Disclosure', emoji: '👽',
+      text: 'Alien events dominated. You know the truth. So does everyone else. Nobody cares.' };
+  }
+  if (maxTheme === 'cthulhu') {
+    return { id: 'dreamer', name: 'The Dreamer', emoji: '🐙',
+      text: 'Cthulhu events dominated. You\'re not sure you survived. The stars are still singing. You listen.' };
+  }
+  if (maxTheme === 'ai') {
+    return { id: 'automated', name: 'Automated', emoji: '🤖',
+      text: 'AI events dominated. You survived. The AGI wrote this ending for you. It\'s more efficient than what you would have written.' };
+  }
+  if (maxTheme === 'covid') {
+    return { id: 'herd-immunity', name: 'Herd Immunity', emoji: '🦠',
+      text: 'COVID events dominated. Most of your party is dead or disabled. On the bright side, the discourse ended.' };
+  }
+  if (maxTheme === 'kaiju') {
+    return { id: 'collateral', name: 'Collateral Damage', emoji: '🏢',
+      text: 'Kaiju events dominated. You lived. Your city didn\'t. Rebuilding begins. Same contractors.' };
+  }
+  if (maxTheme === 'neo-feudalism') {
+    return { id: 'barely-surviving', name: 'Barely Surviving', emoji: '💰',
+      text: 'Neo-Feudalism dominated. You made it to 2027 with negative money, Class 1, and no healthcare. Congratulations on your survival. Your bill is in the mail.' };
+  }
+
   // Default survival
   return { id: 'you-made-it', name: 'You Made It', emoji: '⚔️',
     text: 'At least one survivor. It\'s 2027. The bar is on the floor and you cleared it.' };
+}
+
+// --- Tombstone persistence (localStorage) ---
+const TOMBSTONE_KEY = 'polycrisis-tombstones';
+
+function loadTombstones() {
+  try {
+    const data = localStorage.getItem(TOMBSTONE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch { return []; }
+}
+
+function saveTombstone(name, cause, month, epitaph) {
+  try {
+    const tombs = loadTombstones();
+    tombs.push({ name, cause, month, epitaph, timestamp: Date.now() });
+    // Keep max 50 tombstones
+    if (tombs.length > 50) tombs.shift();
+    localStorage.setItem(TOMBSTONE_KEY, JSON.stringify(tombs));
+  } catch {}
+}
+
+function getRandomTombstone() {
+  const tombs = loadTombstones();
+  if (tombs.length === 0) return null;
+  return tombs[Math.floor(Math.random() * tombs.length)];
+}
+
+// Apply effects and track which theme caused the damage
+const _originalApplyEffects = applyEffects;
+function applyEffectsWithTracking(effects, themes) {
+  if (!effects) return;
+  for (const [key, val] of Object.entries(effects)) {
+    const dmgKeys = ['health', 'sanity', 'hope', 'agency', 'morale', 'money', 'supplies'];
+    if (dmgKeys.includes(key) && val < 0 && themes) {
+      trackDamageTheme(themes, val);
+    }
+  }
+  _originalApplyEffects(effects);
 }
 
 // ============================================================
@@ -904,8 +1021,8 @@ function makeChoice(idx) {
   // Use origIdx to get the original choice data (before shuffling/corruption)
   const originalChoice = event.choices[choice.origIdx];
 
-  // Apply effects
-  applyEffects(originalChoice.effects);
+  // Apply effects with theme tracking
+  applyEffectsWithTracking(originalChoice.effects, event.themes);
 
   // Log it
   run.log.push({
@@ -914,13 +1031,18 @@ function makeChoice(idx) {
     choice: originalChoice.text,
     effects: originalChoice.effects,
     reveal: originalChoice.reveal || null,
+    themes: event.themes,
   });
 
   // Check deaths
   const dead = checkDeaths();
 
-  // Show outcome
-  renderOutcome(originalChoice, dead, choice.autoSelected);
+  // If someone died, show tombstone screen first
+  if (dead.length > 0 && !isGameOver()) {
+    renderTombstone(dead[0], originalChoice);
+  } else {
+    renderOutcome(originalChoice, dead, choice.autoSelected);
+  }
 }
 
 function renderOutcome(choice, dead, wasAutoSelected) {
@@ -1009,7 +1131,10 @@ function nextMonth() {
     run.eventQueue = [];
     // Monthly upkeep: infection spread, supply drain
     monthlyUpkeep();
-    renderMonthScreen();
+    // Random tombstone encounter (15% chance, requires existing tombstones)
+    if (!maybeShowTombstoneEncounter()) {
+      renderMonthScreen();
+    }
   }
 }
 
@@ -1054,6 +1179,94 @@ function monthlyUpkeep() {
   }
 }
 
+// --- Tombstone screen (shown when a party member dies) ---
+function renderTombstone(member, choice) {
+  const month = MONTHS[run.monthIdx];
+  const revealHTML = choice.reveal ? `<div class="outcome-reveal">${esc(choice.reveal)}</div>` : '';
+
+  setGameHTML(`
+    <div class="game-screen screen-content">
+      <div class="tombstone-screen">
+        <div class="tombstone-graphic">
+          ⚰️
+        </div>
+        <div class="tombstone-name">${esc(member.customName)}</div>
+        <div class="tombstone-job">${member.name}</div>
+        <div class="tombstone-cause">${esc(member.deathCause)}</div>
+        <div class="tombstone-month">${esc(member.deathMonth)} 2026</div>
+        <div class="tombstone-epitaph-prompt">Write an epitaph:</div>
+        <input type="text" class="epitaph-input" id="epitaph-input" 
+          placeholder="Here lies ${esc(member.customName)}..." 
+          maxlength="80" />
+        <div class="tombstone-actions">
+          <button class="nav-btn nav-continue" onclick="saveEpitaphAndContinue('${member.id}')">Continue →</button>
+        </div>
+      </div>
+      ${revealHTML ? '<div class="outcome-box" style="margin-top:1rem">' + revealHTML + '</div>' : ''}
+    </div>
+  `);
+  showScreen('game');
+
+  // Focus the input
+  setTimeout(() => {
+    const inp = document.getElementById('epitaph-input');
+    if (inp) inp.focus();
+  }, 100);
+}
+
+function saveEpitaphAndContinue(memberId) {
+  const member = run.members.find(m => m.id === memberId);
+  if (!member) { renderOutcome({text:'',effects:{},reveal:''}, [], false); return; }
+  
+  const inp = document.getElementById('epitaph-input');
+  const epitaph = inp ? inp.value.trim() : '';
+  member.epitaph = epitaph || 'Here lies ' + member.customName;
+  
+  // Save to localStorage for future runs
+  saveTombstone(member.customName, member.deathCause, member.deathMonth, member.epitaph);
+  
+  // Show outcome (with death notice)
+  const fakeChoice = { text: 'Continue', effects: {}, reveal: null };
+  renderOutcome(fakeChoice, [member], false);
+}
+
+// --- Tombstone encounter (random chance in future runs) ---
+function maybeShowTombstoneEncounter() {
+  const tomb = getRandomTombstone();
+  if (!tomb) return false;
+  if (Math.random() > 0.15) return false; // 15% chance
+  
+  // Sanity < 20: tombstone in languages that don't exist
+  let epitaph = tomb.epitaph || 'Here lies ' + tomb.name;
+  if (run.sanity < 20 && Math.random() < 0.3) {
+    // Corrupt the epitaph
+    epitaph = epitaph.split('').map(c => Math.random() < 0.3 ? String.fromCharCode(c.charCodeAt(0) + Math.floor(Math.random()*20)+300) : c).join('');
+  }
+  // High AI: grammatically perfect, emotionally hollow
+  if (run.agency < 30 && Math.random() < 0.3) {
+    epitaph = 'The aforementioned individual has ceased to be a going concern. Their KPIs were satisfactory.';
+  }
+  
+  setGameHTML(`
+    <div class="game-screen screen-content">
+      <div class="tombstone-encounter">
+        <div class="encounter-label">You pass a grave on the trail:</div>
+        <div class="tombstone-graphic small">⚰️</div>
+        <div class="tombstone-name">${esc(tomb.name)}</div>
+        <div class="tombstone-cause">${esc(tomb.cause)}</div>
+        <div class="tombstone-epitaph">"${esc(epitaph)}"</div>
+        <div class="tombstone-month">${esc(tomb.month || '')}</div>
+      </div>
+      <div class="game-nav">
+        <span></span>
+        <button class="nav-btn nav-continue" onclick="renderMonthScreen()">Continue on the trail →</button>
+      </div>
+    </div>
+  `);
+  showScreen('game');
+  return true;
+}
+
 function renderGameOver() {
   run.gameOver = true;
   const ending = getEnding();
@@ -1077,6 +1290,7 @@ function renderGameOver() {
       <div class="summary-member-info">
         <div class="summary-name">${esc(m.customName)}</div>
         <div class="summary-job">${m.name} — ${esc(m.deathCause)}</div>
+        ${m.epitaph ? '<div class="epitaph-display">"' + esc(m.epitaph) + '"</div>' : ''}
       </div>
       <span class="mini-stat">${esc(m.deathMonth || '?')}</span>
     </div>
@@ -1091,6 +1305,22 @@ function renderGameOver() {
     <div class="resource-item"><span class="res-icon">😊</span> <span class="res-label">Morale</span> <span class="res-val">${run.morale}</span></div>
   `;
 
+  // Damage by theme pie (text-based)
+  const themeDamage = run.themeDamage || {};
+  const totalDamage = Object.values(themeDamage).reduce((s, v) => s + v, 0);
+  const themeBreakdown = totalDamage > 0 ? Object.entries(themeDamage)
+    .sort((a, b) => b[1] - a[1])
+    .map(([t, d]) => {
+      const tm = THEMES[t];
+      const pct = Math.round(d / totalDamage * 100);
+      return `<div class="theme-damage-row"><span class="theme-dmg-emoji">${tm ? tm.emoji : '❓'}</span> <span class="theme-dmg-name">${tm ? tm.name : t}</span> <span class="theme-dmg-bar"><span class="theme-dmg-fill" style="width:${pct}%"></span></span> <span class="theme-dmg-pct">${pct}%</span></div>`;
+    }).join('') : '<div class="buff-item dim">No damage recorded.</div>';
+
+  // Share card
+  const survivorNames = survivors.map(m => m.customName).join(', ') || 'None';
+  const deadNames = dead.map(m => m.customName).join(', ') || 'None';
+  const shareText = `⚰️ POLYCRISIS TRAIL — ${ending.emoji} ${ending.name}\n\n${survivors.length}/4 survived. ${dead.length} fallen.\nSurvivors: ${survivorNames}\nFallen: ${deadNames}\nMoney: $${run.money.toLocaleString()} · Hope: ${run.hope} · Sanity: ${run.sanity} · Agency: ${run.agency}\n${run.log.length} events endured across 11 months.\n\n"${ending.text}"`;
+
   setGameHTML(`
     <div class="game-screen screen-content">
       <div class="game-header">
@@ -1103,7 +1333,7 @@ function renderGameOver() {
         <div class="summary-party">${survivorHTML}</div>
       </div>
 
-      ${deadHTML ? `<div class="summary-section"><div class="section-title">The Fallen</div><div class="summary-party">${deadHTML}</div></div>` : ''}
+      ${deadHTML ? '<div class="summary-section"><div class="section-title">The Fallen</div><div class="summary-party">' + deadHTML + '</div></div>' : ''}
 
       <div class="summary-section">
         <div class="section-title">Final Stats</div>
@@ -1111,19 +1341,50 @@ function renderGameOver() {
       </div>
 
       <div class="summary-section">
-        <div class="section-title">Run Summary</div>
-        <div class="run-summary">
-          ${survivors.length}/4 survived. ${dead.length} fallen. Money: $${run.money.toLocaleString()}. ${run.log.length} events endured.
+        <div class="section-title">Damage by Crisis</div>
+        <div class="theme-damage-list">${themeBreakdown}</div>
+      </div>
+
+      <div class="summary-section">
+        <div class="section-title">Share Card</div>
+        <div class="share-card">
+          <pre class="share-text">${esc(shareText)}</pre>
+          <button class="nav-btn" onclick="copyShareCard()">📋 Copy to clipboard</button>
         </div>
       </div>
 
       <div class="phase-end">
         <div class="tombstone">⚰️ ${ending.emoji}</div>
+        <div class="tombstone-count">${loadTombstones().length} tombstones on the trail</div>
         <button class="nav-btn nav-continue" onclick="restartGame()">↻ Play Again</button>
       </div>
     </div>
   `);
   showScreen('game');
+}
+
+function copyShareCard() {
+  const pre = document.querySelector('.share-text');
+  if (!pre) return;
+  const text = pre.textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert('Share card copied! Paste it anywhere.');
+    }).catch(() => {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); alert('Share card copied!'); } catch {}
+  document.body.removeChild(ta);
 }
 
 // ============================================================
