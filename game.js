@@ -367,7 +367,7 @@ function renderSummary() {
     <div class="game-screen screen-content">
       <div class="game-header">
         <h2>THE TRAIL BEGINS</h2>
-        <p class="game-subtitle">February 2026. The polycrisis doesn't wait for you to be ready.</p>
+        <p class="game-subtitle">${(() => { const m = new Date().getMonth()+1; return m < 2 ? 'February' : MONTHS.find(mo => mo.num === m)?.name || 'February'; })()} 2026. The polycrisis doesn't wait for you to be ready.</p>
       </div>
 
       <div class="summary-section">
@@ -404,15 +404,16 @@ function renderSummary() {
       </div>
 
       <div class="event-teaser">
-        <div class="section-title">The Trail Awaits — 11 Months, 7 Crises</div>
-        <div class="event-card">
-          <div class="event-theme">🐙 CTHULHU</div>
-          <div class="event-text">Strange dreams. The geometry of your apartment is wrong. Sanity check incoming.</div>
-        </div>
-        <div class="event-card">
-          <div class="event-theme">🤖 AI SINGULARITY</div>
-          <div class="event-text">AGI rumors leak. Tech stocks surge. Your AI Researcher is not sleeping.</div>
-        </div>
+        <div class="section-title">The Trail Awaits — ${MONTHS.slice(Math.max(0, MONTHS.findIndex(mo => mo.num === (new Date().getMonth()+1 < 2 ? 2 : new Date().getMonth()+1)))).length} Months, 7 Crises</div>
+        ${(() => {
+          const realMonth = new Date().getMonth()+1 < 2 ? 2 : new Date().getMonth()+1;
+          const eligible = EVENTS.filter(e => e.months && e.months.includes(realMonth)).slice(0, 2);
+          if (eligible.length === 0) return '<div class="event-card"><div class="event-text">The polycrisis is preparing. It will find you.</div></div>';
+          return eligible.map(e => {
+            const tm = THEMES[e.themes[0]];
+            return `<div class="event-card"><div class="event-theme">${tm ? tm.emoji + ' ' + tm.name : ''}</div><div class="event-text">${esc(e.text.substring(0, 100))}${e.text.length > 100 ? '...' : ''}</div></div>`;
+          }).join('');
+        })()}
       </div>
 
       <div class="cta">
@@ -480,8 +481,16 @@ function initRun() {
   if (cls.id === 'drowning') members.forEach(m => { if (m.id === 'debt-slave') m.classStat = 1; });
   if (cls.id === 'trust-fund') members.forEach(m => { if (m.id === 'venture-capitalist') m.classStat = 10; });
 
+  // Start at the current real-world month (Jan = resolutions phase, so start at Feb minimum)
+  const realMonth = new Date().getMonth() + 1; // 1-12
+  const startMonthNum = realMonth < 2 ? 2 : realMonth; // Never start before Feb
+  const startMonthIdx = MONTHS.findIndex(m => m.num === startMonthNum);
+  const totalMonths = MONTHS.length - Math.max(0, startMonthIdx); // remaining months from start
+
   run = {
-    monthIdx: 0,
+    monthIdx: Math.max(0, startMonthIdx),
+    startMonthIdx: Math.max(0, startMonthIdx),
+    totalMonths,
     members,
     money: baseMoney,
     supplies: supplies,
@@ -1010,13 +1019,16 @@ function renderMonthScreen() {
       ${paywallBanner}
       <div class="game-header">
         <h2>${month.name} 2026</h2>
-        <p class="game-subtitle">Month ${run.monthIdx + 1} of 11 · The trail continues</p>
+        <p class="game-subtitle">Month ${run.monthIdx - run.startMonthIdx + 1} of ${run.totalMonths} · The trail continues</p>
       </div>
       ${statusBar}
       <div class="member-row">${memberRow}</div>
       ${eventHTML}
       <div class="month-progress">
-        ${MONTHS.map((m, i) => `<div class="progress-dot ${i < run.monthIdx ? 'done' : ''} ${i === run.monthIdx ? 'current' : ''}"></div>`).join('')}
+        ${MONTHS.slice(run.startMonthIdx).map((m, i) => {
+          const realIdx = run.startMonthIdx + i;
+          return `<div class="progress-dot ${realIdx < run.monthIdx ? 'done' : ''} ${realIdx === run.monthIdx ? 'current' : ''}"></div>`;
+        }).join('')}
       </div>
     </div>
   `);
