@@ -614,9 +614,12 @@ function restartGame() {
 // ============================================================
 
 function init() {
+  console.log('[Polycrisis Trail] init() called, readyState:', document.readyState);
   const btn = document.getElementById('begin-trail-btn');
+  console.log('[Polycrisis Trail] button found:', !!btn);
   if (btn) {
     btn.addEventListener('click', startGame);
+    console.log('[Polycrisis Trail] click listener attached');
   }
 }
 
