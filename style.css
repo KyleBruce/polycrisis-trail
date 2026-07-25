@@ -280,6 +280,10 @@
   animation: flicker 6s infinite;
     }
 
+    #game-root {
+  transition: opacity 150ms ease-out, transform 150ms ease-out;
+    }
+
     #game-root .screen-content {
   max-width: 800px;
   margin: 0 auto;

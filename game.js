@@ -27,16 +27,43 @@ function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 // ============================================================
 
 function showScreen(name, preserveScroll) {
-  $$('.screen').forEach(s => s.classList.remove('active'));
   const screen = document.getElementById('screen-' + name);
-  if (screen) screen.classList.add('active');
+  if (!screen) return;
+  
+  // If already active, don't re-toggle (avoids flash on re-renders)
+  if (!screen.classList.contains('active')) {
+    $$('.screen').forEach(s => s.classList.remove('active'));
+    screen.classList.add('active');
+  }
+  
   if (!preserveScroll) {
+    // Use instant scroll for outcome/month transitions to avoid double-scroll
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }
 
-function setGameHTML(html) {
-  $('#game-root').innerHTML = html;
+function setGameHTML(html, opts) {
+  const root = $('#game-root');
+  if (!root) return;
+  
+  // If transitioning (not first render), fade out then in
+  if (root.children.length > 0 && (!opts || !opts.instant)) {
+    root.style.opacity = '0';
+    root.style.transform = 'translateY(4px)';
+    setTimeout(() => {
+      root.innerHTML = html;
+      root.style.opacity = '1';
+      root.style.transform = 'translateY(0)';
+      // Restore scroll position if requested
+      if (opts && opts.scrollTop !== undefined) {
+        window.scrollTo({ top: opts.scrollTop, behavior: 'instant' });
+      }
+    }, 150);
+  } else {
+    root.innerHTML = html;
+    root.style.opacity = '1';
+    root.style.transform = 'translateY(0)';
+  }
 }
 
 // ============================================================
