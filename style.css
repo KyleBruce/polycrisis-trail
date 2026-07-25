@@ -1720,3 +1720,25 @@
       content: ' 😵';
       font-size: 0.7rem;
     }
+
+    /* Audio toggle */
+    .audio-toggle {
+  text-align: center;
+  margin-bottom: 1rem;
+    }
+
+    .audio-btn {
+  background: var(--terminal);
+  border: 1px solid var(--fg-dim);
+  color: var(--fg-dim);
+  font-family: inherit;
+  font-size: 0.7rem;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+    }
+
+    .audio-btn:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+    }

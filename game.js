@@ -1107,6 +1107,9 @@ function renderMonthScreen() {
     ? '<div class="paywall-banner">🔒 PREMIUM CONTENT LOCKED · UPGRADE YOUR CLASS TO ACCESS MORE OPTIONS</div>'
     : '';
 
+  // Update WebAudio based on visual mode
+  updateAudioForVisualMode(visualClasses);
+
   setGameHTML(`
     <div class="game-screen screen-content ${visualClasses}">
       ${paywallBanner}
@@ -1660,7 +1663,92 @@ function startGame() {
 }
 
 function restartGame() {
+  stopAllAudio();
   startGame();
+}
+
+// ============================================================
+// WEB AUDIO — bass rumble (kaiju), drone (cthulhu)
+// Off by default, toggleable via button
+// ============================================================
+
+let audioCtx = null;
+let audioEnabled = false;
+let activeOscs = [];
+
+function toggleAudio() {
+  audioEnabled = !audioEnabled;
+  const btn = document.getElementById('audio-toggle-btn');
+  if (btn) btn.textContent = audioEnabled ? '🔊 Sound: ON' : '🔊 Sound: OFF';
+  
+  if (audioEnabled) {
+    if (!audioCtx) {
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (e) {
+        audioEnabled = false;
+        if (btn) btn.textContent = '🔊 Sound: UNAVAILABLE';
+        return;
+      }
+    }
+    // Resume context (browsers suspend until user interaction)
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } else {
+    stopAllAudio();
+  }
+}
+
+function playDrone(freq, type, gainVal) {
+  if (!audioEnabled || !audioCtx) return null;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.value = 0;
+  gain.gain.setTargetAtTime(gainVal, audioCtx.currentTime, 0.5);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  return { osc, gain };
+}
+
+function stopAllAudio() {
+  activeOscs.forEach(({ osc, gain }) => {
+    try {
+      gain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.3);
+      setTimeout(() => { try { osc.stop(); } catch {} }, 500);
+    } catch {}
+  });
+  activeOscs = [];
+}
+
+function updateAudioForVisualMode(visualClasses) {
+  if (!audioEnabled) return;
+  
+  // Stop current audio
+  stopAllAudio();
+  
+  // Kaiju: bass rumble
+  if (visualClasses.includes('kaiju-shake')) {
+    const rumble = playDrone(35, 'sine', 0.08);
+    const rumble2 = playDrone(52, 'sine', 0.04);
+    if (rumble) activeOscs.push(rumble);
+    if (rumble2) activeOscs.push(rumble2);
+  }
+  
+  // Cthulhu (insanity): dissonant drone
+  if (visualClasses.includes('insane')) {
+    const drone = playDrone(55, 'sawtooth', 0.03);
+    const drone2 = playDrone(58, 'sawtooth', 0.02); // slight detune for dissonance
+    if (drone) activeOscs.push(drone);
+    if (drone2) activeOscs.push(drone2);
+  }
+  
+  // Fever haze: low heartbeat
+  if (visualClasses.includes('fever-haze')) {
+    const heartbeat = playDrone(40, 'triangle', 0.05);
+    if (heartbeat) activeOscs.push(heartbeat);
+  }
 }
 
 // ============================================================
