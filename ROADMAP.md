@@ -51,7 +51,7 @@ The core game engine. Playable start-to-finish run with a simple event model.
 
 ---
 
-## Phase 3 — The Polycrisis Proper (simultaneity + theme mechanics)
+## ✅ Phase 3 — The Polycrisis Proper (DONE)
 
 This is where the game earns its name. Multiple crises per month, and each theme gets its teeth.
 
