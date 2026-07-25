@@ -404,21 +404,528 @@ function renderSummary() {
       </div>
 
       <div class="event-teaser">
-        <div class="section-title">First Events — February 2026</div>
+        <div class="section-title">The Trail Awaits — 11 Months, 7 Crises</div>
         <div class="event-card">
           <div class="event-theme">🐙 CTHULHU</div>
-          <div class="event-text">Strange dreams plague the party. The geometry of your apartment feels wrong. Sanity check incoming.</div>
+          <div class="event-text">Strange dreams. The geometry of your apartment is wrong. Sanity check incoming.</div>
         </div>
         <div class="event-card">
           <div class="event-theme">🤖 AI SINGULARITY</div>
-          <div class="event-text">AGI rumors leak. Tech stocks surge. Your Tech Bro is excited. Your AI Researcher is not.</div>
+          <div class="event-text">AGI rumors leak. Tech stocks surge. Your AI Researcher is not sleeping.</div>
+        </div>
+      </div>
+
+      <div class="cta">
+        <button class="cta-button" onclick="beginTrail()">BEGIN THE TRAIL →</button>
+      </div>
+    </div>
+  `);
+  showScreen('game');
+}
+
+function beginTrail() {
+  initRun();
+  renderMonthScreen();
+}
+
+// ============================================================
+// PHASE 2: THE TRAIL LOOP
+// ============================================================
+
+// --- Run state (separate from setup state) ---
+let run = null;
+
+function initRun() {
+  const cls = state.startingClass;
+  const staminaMod = cls.staminaMod || 0;
+  const moraleMod = cls.moraleMod || 0;
+  const healthBonus = (state.resolutions['get-in-shape'] || 0) * 5;
+  const sanityBonus = (state.resolutions['therapy'] || 0) * 10;
+  const supplies = (state.resolutions['supplies'] || 0) * 4;
+  const moneyBonus = (state.resolutions['emergency-fund'] || 0) * 1000;
+  const baseMoney = cls.money - (cls.debt || 0) + moneyBonus;
+
+  // Find weakest member for health bonus
+  const minHealthIdx = state.party.reduce((mi, m, i, a) => m.health < a[mi].health ? i : mi, 0);
+
+  const members = state.party.map((m, i) => ({
+    id: m.id, name: m.name, emoji: m.emoji,
+    customName: state.partyNames[m.id] || m.name,
+    health: m.health + (i === minHealthIdx ? healthBonus : 0),
+    stamina: m.stamina + staminaMod,
+    morale: m.morale + moraleMod,
+    infection: 0,
+    classStat: cls.classStat,
+    alive: true,
+    buffs: [],
+  }));
+
+  // Special class locks
+  if (cls.id === 'drowning') members.forEach(m => { if (m.id === 'debt-slave') m.classStat = 1; });
+  if (cls.id === 'trust-fund') members.forEach(m => { if (m.id === 'venture-capitalist') m.classStat = 10; });
+
+  run = {
+    monthIdx: 0,
+    members,
+    money: baseMoney,
+    supplies: supplies,
+    hope: 100,
+    sanity: 100 + sanityBonus,
+    agency: 100,
+    morale: Math.round(members.reduce((s, m) => s + m.morale, 0) / members.length),
+    classStat: cls.classStat,
+    log: [],
+    deadThisRun: [],
+    doomscrollPeeked: [],
+    resolutionFlags: {
+      doomscroll: state.resolutions['doomscroll'] > 0,
+      community: state.resolutions['community-organizing'] > 0,
+      handy: state.resolutions['learn-trade'] > 0,
+      guns: state.resolutions['buy-gun'] || 0,
+    },
+    currentEvent: null,
+    currentChoices: null,
+    gameOver: false,
+  };
+
+  // Apply doomscroll morale penalty
+  if (run.resolutionFlags.doomscroll) {
+    run.morale = Math.max(0, run.morale - 15);
+  }
+}
+
+// --- Stat application ---
+function applyEffects(effects) {
+  if (!effects) return;
+  for (const [key, val] of Object.entries(effects)) {
+    switch (key) {
+      case 'money': run.money += val; break;
+      case 'supplies': run.supplies += val; break;
+      case 'hope': run.hope = Math.max(0, Math.min(100, run.hope + val)); break;
+      case 'sanity': run.sanity = Math.max(0, Math.min(100, run.sanity + val)); break;
+      case 'agency': run.agency = Math.max(0, Math.min(100, run.agency + val)); break;
+      case 'morale': run.morale = Math.max(0, Math.min(100, run.morale + val)); break;
+      case 'classStat': run.classStat = Math.max(1, Math.min(10, run.classStat + val)); break;
+      case 'infection':
+        // Party-wide infection bump
+        run.members.filter(m => m.alive).forEach(m => {
+          m.infection = Math.max(0, Math.min(100, m.infection + val));
+        });
+        break;
+      case 'health':
+        // Party-wide health
+        run.members.filter(m => m.alive).forEach(m => {
+          m.health = Math.max(0, Math.min(100, m.health + val));
+        });
+        break;
+      default:
+        // Unknown effect keys silently ignored for now
+        break;
+    }
+  }
+}
+
+// --- Event drawing ---
+function drawEvent(monthNum) {
+  const eligible = EVENTS.filter(e => {
+    if (e.months && !e.months.includes(monthNum)) return false;
+    return true;
+  });
+
+  if (eligible.length === 0) return null;
+
+  // Weighted random
+  const totalWeight = eligible.reduce((s, e) => s + (e.weight || 5), 0);
+  let roll = Math.random() * totalWeight;
+  for (const e of eligible) {
+    roll -= (e.weight || 5);
+    if (roll <= 0) return e;
+  }
+  return eligible[eligible.length - 1];
+}
+
+// --- Check if choice is available ---
+function isChoiceAvailable(choice) {
+  if (!choice.requires) return true;
+  return choice.requires.every(id => run.members.some(m => m.alive && m.id === id));
+}
+
+// --- Death checks ---
+function checkDeaths() {
+  const newlyDead = [];
+
+  // Health-based deaths
+  run.members.forEach(m => {
+    if (m.alive && m.health <= 0) {
+      m.alive = false;
+      m.deathCause = pickDeathCause('general');
+      m.deathMonth = MONTHS[run.monthIdx].name;
+      newlyDead.push(m);
+    }
+  });
+
+  // Hope-based game over
+  if (run.hope <= 0 && run.members.some(m => m.alive)) {
+    // Hope 0 kills a random member
+    const alive = run.members.filter(m => m.alive);
+    if (alive.length > 0) {
+ const victim = alive[Math.floor(Math.random() * alive.length)];
+      victim.alive = false;
+      victim.health = 0;
+      victim.deathCause = 'died of despair';
+      victim.deathMonth = MONTHS[run.monthIdx].name;
+      newlyDead.push(victim);
+      run.hope = 20; // Partial reset so game continues
+    }
+  }
+
+  // Infection deaths (high infection + low health)
+  run.members.forEach(m => {
+    if (m.alive && m.infection >= 80 && Math.random() < 0.3) {
+      m.alive = false;
+      m.health = 0;
+      m.deathCause = pickDeathCause('covid');
+      m.deathMonth = MONTHS[run.monthIdx].name;
+      newlyDead.push(m);
+    }
+  });
+
+  run.deadThisRun.push(...newlyDead);
+  return newlyDead;
+}
+
+function pickDeathCause(theme) {
+  const pool = DEATH_CAUSES[theme] || DEATH_CAUSES.general;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function isGameOver() {
+  return !run.members.some(m => m.alive);
+}
+
+// --- Endings ---
+function getEnding() {
+  const survivors = run.members.filter(m => m.alive);
+  const survivorCount = survivors.length;
+
+  if (survivorCount === 0) {
+    return { id: 'total-wipe', name: 'Total Party Wipe', emoji: '💀',
+      text: 'Everyone is dead. The polycrisis didn\'t even notice. Standard Oregon Trail experience.' };
+  }
+
+  if (survivorCount === 4 && run.hope > 80 && run.sanity > 80 && run.agency > 80) {
+    return { id: 'perfect-run', name: 'Perfect Run', emoji: '🏆',
+      text: 'All four survivors. All stats above 80. Statistically impossible. Somebody cheated.' };
+  }
+
+  if (run.sanity <= 0 && run.hope > 0) {
+    return { id: 'ascension', name: 'Ascension', emoji: '🌀',
+      text: 'Sanity hit 0, but Hope survived. You didn\'t die. You became something else. The save file is corrupted.' };
+  }
+
+  if (run.hope > 50 && run.sanity > 50 && run.agency > 50 && survivorCount >= 3) {
+    return { id: 'good-timeline', name: 'The Good Timeline', emoji: '🌟',
+      text: 'You\'re not okay but you\'re okay-er than most. 3+ survivors, stats holding. Take the win.' };
+  }
+
+  // Default survival
+  return { id: 'you-made-it', name: 'You Made It', emoji: '⚔️',
+    text: 'At least one survivor. It\'s 2027. The bar is on the floor and you cleared it.' };
+}
+
+// ============================================================
+// TRAIL UI RENDERING
+// ============================================================
+
+function renderMonthScreen() {
+  const month = MONTHS[run.monthIdx];
+
+  // Draw event for this month
+  const event = drawEvent(month.num);
+  run.currentEvent = event;
+  run.currentChoices = event ? event.choices.filter(c => true) : null; // Keep all; filter at render
+
+  // Build status bar
+  const aliveMembers = run.members.filter(m => m.alive);
+  const avgHealth = Math.round(aliveMembers.reduce((s, m) => s + m.health, 0) / aliveMembers.length);
+
+  const statusBar = `
+    <div class="status-bar">
+      <div class="status-item"><span class="stat-icon">💰</span> $${run.money.toLocaleString()}</div>
+      <div class="status-item"><span class="stat-icon">📦</span> ${run.supplies}</div>
+      <div class="status-item"><span class="stat-icon">❤️</span> ${avgHealth}</div>
+      <div class="status-item"><span class="stat-icon">😊</span> ${run.morale}</div>
+      <div class="status-item"><span class="stat-icon">🕯️</span> ${run.hope}</div>
+      <div class="status-item"><span class="stat-icon">🧠</span> ${run.sanity}</div>
+      <div class="status-item"><span class="stat-icon">🤖</span> ${run.agency}</div>
+    </div>
+  `;
+
+  const memberRow = aliveMembers.map(m => `
+    <div class="member-chip" title="${esc(m.customName)} — HP:${m.health} STA:${m.stamina} MOR:${m.morale} INF:${m.infection}">
+      <span class="chip-emoji">${m.emoji}</span>
+      <span class="chip-name">${esc(m.customName)}</span>
+      <span class="chip-hp">${m.health}</span>
+    </div>
+  `).join('');
+
+  // Event display
+  let eventHTML = '';
+  if (event) {
+    const themeBadges = event.themes.map(t => {
+      const tm = THEMES[t];
+      return tm ? `<span class="theme-badge">${tm.emoji} ${tm.name}</span>` : '';
+    }).join(' ');
+
+    const choices = event.choices.map((c, i) => {
+      const available = isChoiceAvailable(c);
+      const reqText = c.requires ? ` <span class="choice-req">(${c.requires.map(id => {
+        const pm = PARTY_MEMBERS.find(p => p.id === id);
+        return pm ? pm.name : id;
+      }).join(' + ')})</span>` : '';
+      return `
+        <button class="choice-btn" ${!available ? 'disabled' : ''} onclick="makeChoice(${i})">
+          ${esc(c.text)}${reqText}
+        </button>
+      `;
+    }).join('');
+
+    eventHTML = `
+      <div class="event-box">
+        <div class="event-themes">${themeBadges}</div>
+        <div class="event-text">${esc(event.text)}</div>
+        <div class="choices">${choices}</div>
+      </div>
+    `;
+  } else {
+    eventHTML = `<div class="event-box"><div class="event-text">A quiet month. Nothing happens. You don\'t trust it.</div></div>`;
+  }
+
+  setGameHTML(`
+    <div class="game-screen screen-content">
+      <div class="game-header">
+        <h2>${month.name} 2026</h2>
+        <p class="game-subtitle">Month ${run.monthIdx + 1} of 11 · The trail continues</p>
+      </div>
+      ${statusBar}
+      <div class="member-row">${memberRow}</div>
+      ${eventHTML}
+      <div class="month-progress">
+        ${MONTHS.map((m, i) => `<div class="progress-dot ${i < run.monthIdx ? 'done' : ''} ${i === run.monthIdx ? 'current' : ''}"></div>`).join('')}
+      </div>
+    </div>
+  `);
+  showScreen('game');
+}
+
+function makeChoice(idx) {
+  const event = run.currentEvent;
+  if (!event) return;
+  const choice = event.choices[idx];
+  if (!choice || !isChoiceAvailable(choice)) return;
+
+  // Apply effects
+  applyEffects(choice.effects);
+
+  // Log it
+  run.log.push({
+    month: MONTHS[run.monthIdx].name,
+    event: event.text,
+    choice: choice.text,
+    effects: choice.effects,
+    reveal: choice.reveal || null,
+  });
+
+  // Check deaths
+  const dead = checkDeaths();
+
+  // Show outcome
+  renderOutcome(choice, dead);
+}
+
+function renderOutcome(choice, dead) {
+  const month = MONTHS[run.monthIdx];
+
+  // Build effect summary
+  const effectParts = [];
+  if (choice.effects) {
+    for (const [key, val] of Object.entries(choice.effects)) {
+      const labels = {
+        money: val >= 0 ? `+$${val}` : `-$${Math.abs(val)}`,
+        supplies: val >= 0 ? `+${val} supplies` : `-${Math.abs(val)} supplies`,
+        health: val >= 0 ? `+${val} HP` : `-${Math.abs(val)} HP`,
+        morale: val >= 0 ? `+${val} morale` : `-${Math.abs(val)} morale`,
+        hope: val >= 0 ? `+${val} hope` : `-${Math.abs(val)} hope`,
+        sanity: val >= 0 ? `+${val} sanity` : `-${Math.abs(val)} sanity`,
+        agency: val >= 0 ? `+${val} agency` : `-${Math.abs(val)} agency`,
+        classStat: val >= 0 ? `+${val} class` : `-${Math.abs(val)} class`,
+        infection: val >= 0 ? `+${val} infection` : `${val} infection`,
+      };
+      if (labels[key]) effectParts.push(`<span class="effect-tag ${val >= 0 ? 'positive' : 'negative'}">${labels[key]}</span>`);
+    }
+  }
+
+  const revealHTML = choice.reveal ? `<div class="outcome-reveal">${esc(choice.reveal)}</div>` : '';
+  const effectsHTML = effectParts.length ? `<div class="effect-list">${effectParts.join('')}</div>` : '';
+
+  // Death display
+  let deathHTML = '';
+  if (dead.length > 0) {
+    deathHTML = dead.map(d => `
+      <div class="death-notice">
+        <span class="death-emoji">⚰️</span>
+        <span class="death-name">${esc(d.customName)}</span>
+        <span class="death-cause">${esc(d.deathCause)}</span>
+        <span class="death-month">${esc(d.deathMonth)}</span>
+      </div>
+    `).join('');
+  }
+
+  // Check game over
+  const over = isGameOver();
+
+  const continueBtn = over
+    ? `<button class="nav-btn nav-continue" onclick="renderGameOver()">View Final Results →</button>`
+    : `<button class="nav-btn nav-continue" onclick="nextMonth()">Continue to ${run.monthIdx + 1 < MONTHS.length ? MONTHS[run.monthIdx + 1].name : '2027'} →</button>`;
+
+  setGameHTML(`
+    <div class="game-screen screen-content">
+      <div class="game-header">
+        <h2>${month.name} — Outcome</h2>
+      </div>
+      <div class="outcome-box">
+        <div class="outcome-choice">You chose: ${esc(choice.text)}</div>
+        ${effectsHTML}
+        ${revealHTML}
+      </div>
+      ${deathHTML}
+      <div class="game-nav">
+        <span></span>
+        ${continueBtn}
+      </div>
+    </div>
+  `);
+  showScreen('game');
+}
+
+function nextMonth() {
+  run.monthIdx++;
+  if (run.monthIdx >= MONTHS.length) {
+    renderGameOver();
+  } else {
+    // Monthly upkeep: infection spread, supply drain
+    monthlyUpkeep();
+    renderMonthScreen();
+  }
+}
+
+function monthlyUpkeep() {
+  // Supplies drain
+  run.supplies = Math.max(0, run.supplies - 1);
+
+  // If no supplies, health drains
+  if (run.supplies === 0) {
+    run.members.filter(m => m.alive).forEach(m => {
+      m.health = Math.max(0, m.health - 5);
+    });
+  }
+
+  // Infection spread: infected members can spread to others
+  const infected = run.members.filter(m => m.alive && m.infection > 20);
+  if (infected.length > 0) {
+    run.members.filter(m => m.alive && m.infection < 20).forEach(m => {
+      if (Math.random() < 0.3) {
+        m.infection = Math.min(100, m.infection + 10);
+      }
+    });
+  }
+
+  // Healthcare Worker reduces infection
+  const hcw = run.members.find(m => m.alive && m.id === 'healthcare-worker');
+  if (hcw) {
+    run.members.filter(m => m.alive).forEach(m => {
+      m.infection = Math.max(0, m.infection - 5);
+    });
+  }
+
+  // Negative money compounds as debt (neo-feudalism)
+  if (run.money < 0) {
+    run.money = Math.round(run.money * 1.05); // 5% interest on debt
+  }
+
+  // Cultist periodic morale drain
+  const cultist = run.members.find(m => m.alive && m.id === 'cultist');
+  if (cultist && Math.random() < 0.3) {
+    run.morale = Math.max(0, run.morale - 3);
+  }
+}
+
+function renderGameOver() {
+  run.gameOver = true;
+  const ending = getEnding();
+  const survivors = run.members.filter(m => m.alive);
+  const dead = run.deadThisRun;
+
+  const survivorHTML = survivors.length ? survivors.map(m => `
+    <div class="summary-member">
+      <span class="summary-emoji">${m.emoji}</span>
+      <div class="summary-member-info">
+        <div class="summary-name">${esc(m.customName)}</div>
+        <div class="summary-job">${m.name} · HP:${m.health} · INF:${m.infection}</div>
+      </div>
+      <span class="mini-stat">✓ SURVIVED</span>
+    </div>
+  `).join('') : '<div class="buff-item dim">No survivors.</div>';
+
+  const deadHTML = dead.length ? dead.map(m => `
+    <div class="summary-member dead-member">
+      <span class="summary-emoji">⚰️</span>
+      <div class="summary-member-info">
+        <div class="summary-name">${esc(m.customName)}</div>
+        <div class="summary-job">${m.name} — ${esc(m.deathCause)}</div>
+      </div>
+      <span class="mini-stat">${esc(m.deathMonth || '?')}</span>
+    </div>
+  `).join('') : '';
+
+  const finalStats = `
+    <div class="resource-item"><span class="res-icon">💰</span> <span class="res-label">Money</span> <span class="res-val">$${run.money.toLocaleString()}</span></div>
+    <div class="resource-item"><span class="res-icon">📦</span> <span class="res-label">Supplies</span> <span class="res-val">${run.supplies}</span></div>
+    <div class="resource-item"><span class="res-icon">🕯️</span> <span class="res-label">Hope</span> <span class="res-val">${run.hope}</span></div>
+    <div class="resource-item"><span class="res-icon">🧠</span> <span class="res-label">Sanity</span> <span class="res-val">${run.sanity}</span></div>
+    <div class="resource-item"><span class="res-icon">🤖</span> <span class="res-label">Agency</span> <span class="res-val">${run.agency}</span></div>
+    <div class="resource-item"><span class="res-icon">😊</span> <span class="res-label">Morale</span> <span class="res-val">${run.morale}</span></div>
+  `;
+
+  setGameHTML(`
+    <div class="game-screen screen-content">
+      <div class="game-header">
+        <h2>${ending.emoji} ${ending.name}</h2>
+        <p class="game-subtitle">${esc(ending.text)}</p>
+      </div>
+
+      <div class="summary-section">
+        <div class="section-title">Survivors (${survivors.length}/4)</div>
+        <div class="summary-party">${survivorHTML}</div>
+      </div>
+
+      ${deadHTML ? `<div class="summary-section"><div class="section-title">The Fallen</div><div class="summary-party">${deadHTML}</div></div>` : ''}
+
+      <div class="summary-section">
+        <div class="section-title">Final Stats</div>
+        <div class="summary-resources">${finalStats}</div>
+      </div>
+
+      <div class="summary-section">
+        <div class="section-title">Run Summary</div>
+        <div class="run-summary">
+          ${survivors.length}/4 survived. ${dead.length} fallen. Money: $${run.money.toLocaleString()}. ${run.log.length} events endured.
         </div>
       </div>
 
       <div class="phase-end">
-        <div class="tombstone">⚰️ The trail continues...</div>
-        <div class="phase-msg">Phase 1 complete. The 12-month journey is under development.</div>
-        <button class="nav-btn nav-continue" onclick="restartGame()">↻ Start Over</button>
+        <div class="tombstone">⚰️ ${ending.emoji}</div>
+        <button class="nav-btn nav-continue" onclick="restartGame()">↻ Play Again</button>
       </div>
     </div>
   `);
@@ -436,6 +943,7 @@ function startGame() {
   state.partyNames = {};
   state.resolutions = {};
   state.tokensRemaining = 10;
+  run = null;
   renderClassSelection();
 }
 

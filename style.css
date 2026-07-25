@@ -841,3 +841,249 @@
     .header h1 {
   animation: glitch 8s infinite;
     }
+
+    /* === TRAIL LOOP (Phase 2) === */
+
+    .status-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  background: var(--terminal);
+  border: 1px solid var(--fg-dim);
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.75rem;
+    }
+
+    .status-item {
+  font-size: 0.8rem;
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+    }
+
+    .status-item .stat-icon {
+  font-size: 0.9rem;
+    }
+
+    .member-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+    }
+
+    .member-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--terminal);
+  border: 1px solid var(--fg-dim);
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+    }
+
+    .chip-emoji {
+  font-size: 1rem;
+    }
+
+    .chip-name {
+  color: var(--fg);
+  font-weight: bold;
+    }
+
+    .chip-hp {
+  color: var(--accent);
+  font-weight: bold;
+    }
+
+    .event-box {
+  background: var(--terminal);
+  border: 1px solid var(--fg-dim);
+  border-left: 3px solid var(--accent);
+  padding: 1.2rem;
+  margin-bottom: 1.5rem;
+    }
+
+    .event-themes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+    }
+
+    .theme-badge {
+  font-size: 0.7rem;
+  color: var(--bg);
+  background: var(--fg-dim);
+  padding: 0.2rem 0.5rem;
+  letter-spacing: 0.05em;
+    }
+
+    .event-text {
+  color: var(--fg);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+    }
+
+    .choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+    }
+
+    .choice-btn {
+  background: var(--bg);
+  border: 1px solid var(--fg-dim);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+  line-height: 1.4;
+    }
+
+    .choice-btn:hover:not(:disabled) {
+  border-color: var(--amber);
+  background: rgba(255, 176, 0, 0.08);
+    }
+
+    .choice-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+    }
+
+    .choice-req {
+  color: var(--amber);
+  font-size: 0.7rem;
+    }
+
+    /* Outcome screen */
+    .outcome-box {
+  background: var(--terminal);
+  border: 1px solid var(--fg-dim);
+  padding: 1.2rem;
+  margin-bottom: 1rem;
+    }
+
+    .outcome-choice {
+  color: var(--fg-dim);
+  font-size: 0.8rem;
+  margin-bottom: 0.75rem;
+    }
+
+    .effect-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+    }
+
+    .effect-tag {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  font-weight: bold;
+    }
+
+    .effect-tag.positive {
+  color: var(--fg);
+  background: rgba(196, 240, 66, 0.15);
+  border: 1px solid var(--fg-dim);
+    }
+
+    .effect-tag.negative {
+  color: var(--accent);
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid var(--accent);
+    }
+
+    .outcome-reveal {
+  color: var(--amber);
+  font-size: 0.85rem;
+  font-style: italic;
+  line-height: 1.5;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--fg-dim);
+    }
+
+    /* Death notice */
+    .death-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(255, 68, 68, 0.08);
+  border: 1px solid var(--accent);
+  padding: 0.8rem 1rem;
+  margin-bottom: 0.5rem;
+    }
+
+    .death-emoji {
+  font-size: 1.3rem;
+    }
+
+    .death-name {
+  color: var(--accent);
+  font-weight: bold;
+  font-size: 0.85rem;
+    }
+
+    .death-cause {
+  color: var(--fg-dim);
+  font-size: 0.8rem;
+  flex: 1;
+    }
+
+    .death-month {
+  color: var(--fg-dim);
+  font-size: 0.7rem;
+    }
+
+    /* Month progress dots */
+    .month-progress {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 1.5rem;
+    }
+
+    .progress-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--terminal);
+  border: 1px solid var(--fg-dim);
+    }
+
+    .progress-dot.done {
+  background: var(--fg-dim);
+    }
+
+    .progress-dot.current {
+  background: var(--amber);
+  border-color: var(--amber);
+  box-shadow: 0 0 6px rgba(255, 176, 0, 0.4);
+    }
+
+    /* Game over */
+    .dead-member {
+  opacity: 0.6;
+    }
+
+    .dead-member .summary-name {
+  color: var(--accent);
+    }
+
+    .run-summary {
+  color: var(--fg);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 1rem;
+  background: var(--terminal);
+  border: 1px solid var(--fg-dim);
+  line-height: 1.6;
+    }
