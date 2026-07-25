@@ -1721,6 +1721,27 @@
       font-size: 0.7rem;
     }
 
+    .member-chip.automated {
+      opacity: 0.6;
+      filter: hue-rotate(180deg) saturate(0.5);
+      border-style: dashed;
+    }
+
+    .member-chip.automated::after {
+      content: ' 🤖';
+      font-size: 0.7rem;
+    }
+
+    .member-chip.long-covid {
+      opacity: 0.7;
+      filter: sepia(0.3) brightness(0.9);
+    }
+
+    .member-chip.long-covid::after {
+      content: ' 🦠';
+      font-size: 0.7rem;
+    }
+
     /* Audio toggle */
     .audio-toggle {
   text-align: center;

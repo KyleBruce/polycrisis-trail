@@ -575,6 +575,22 @@ function applyEffects(effects) {
           m.health = Math.max(0, Math.min(100, m.health + val));
         });
         break;
+      case 'longCovid':
+        // Long COVID debuff: random alive member gets it
+        const targets = run.members.filter(m => m.alive && !m.longCovid);
+        if (targets.length > 0) {
+          const target = targets[Math.floor(Math.random() * targets.length)];
+          target.longCovid = true;
+        }
+        break;
+      case 'automated':
+        // Automation debuff: random alive member replaced by AI version
+        const autoTargets = run.members.filter(m => m.alive && !m.automated);
+        if (autoTargets.length > 0) {
+          const target = autoTargets[Math.floor(Math.random() * autoTargets.length)];
+          target.automated = true;
+        }
+        break;
       default:
         // Unknown effect keys silently ignored for now
         break;
@@ -592,6 +608,15 @@ function drawEvent(monthNum, excludeIds) {
   });
 
   if (eligible.length === 0) return null;
+
+  // AI Researcher: sees hidden AI choices before they fire
+  const aiResearcher = run && run.members && run.members.find(m => m.alive && m.id === 'ai-researcher');
+  if (aiResearcher) {
+    const aiEvents = eligible.filter(e => e.themes.includes('ai'));
+    if (aiEvents.length > 0 && Math.random() < 0.4) {
+      return aiEvents[Math.floor(Math.random() * aiEvents.length)];
+    }
+  }
 
   // Weighted random
   const totalWeight = eligible.reduce((s, e) => s + (e.weight || 5), 0);
@@ -613,10 +638,10 @@ function drawMonthEvents(monthNum) {
   return drawn;
 }
 
-// --- Check if choice is available (party member requires, shocked members can't help) ---
+// --- Check if choice is available (party member requires, shocked/automated members can't help) ---
 function isChoiceAvailable(choice) {
   if (!choice.requires) return true;
-  return choice.requires.every(id => run.members.some(m => m.alive && m.id === id && !m.shocked));
+  return choice.requires.every(id => run.members.some(m => m.alive && m.id === id && !m.shocked && !m.automated));
 }
 
 // --- THEME MECHANICS ---
@@ -664,6 +689,9 @@ function maybeShuffleChoices(choices) {
 // Agency < 50: some choices auto-resolve. Below 30: one choice auto-selected.
 function getAgencyAutoChoice(choices) {
   if (run.agency >= 50) return null;
+  // Conspiracy Theorist is immune to AI auto-selection
+  const conspiracy = run.members.find(m => m.alive && m.id === 'conspiracy-theorist');
+  if (conspiracy) return null;
   // AI auto-selects the "most efficient" (first available) choice
   const available = choices.filter(c => isChoiceAvailable(c));
   if (available.length === 0) return null;
@@ -988,8 +1016,15 @@ function renderMonthScreen() {
   const memberRow = aliveMembers.map(m => {
     const infBadge = m.infection > 0 ? ` <span class="chip-inf">🦠${m.infection}</span>` : '';
     const shockedClass = m.shocked ? ' shocked' : '';
+    const automatedClass = m.automated ? ' automated' : '';
+    const longCovidClass = m.longCovid ? ' long-covid' : '';
+    const statusParts = [];
+    if (m.shocked) statusParts.push('ONTOLOGICAL SHOCK');
+    if (m.automated) statusParts.push('AUTOMATED');
+    if (m.longCovid) statusParts.push('LONG COVID');
+    const statusText = statusParts.length ? ' · ' + statusParts.join(' · ') : '';
     return `
-      <div class="member-chip${shockedClass}" title="${esc(m.customName)} — HP:${m.health} STA:${m.stamina} MOR:${m.morale} INF:${m.infection}${m.shocked ? ' · ONTOLOGICAL SHOCK' : ''}">
+      <div class="member-chip${shockedClass}${automatedClass}${longCovidClass}" title="${esc(m.customName)} — HP:${m.health} STA:${m.stamina} MOR:${m.morale} INF:${m.infection}${statusText}">
         <span class="chip-emoji">${m.emoji}</span>
         <span class="chip-name">${esc(m.customName)}</span>
         <span class="chip-hp">${m.health}</span>${infBadge}
@@ -1437,6 +1472,117 @@ function monthlyUpkeep() {
       }
     });
   }
+
+  // === PARTY MEMBER TRAIT MECHANICS ===
+  applyMemberTraits();
+}
+
+function applyMemberTraits() {
+  if (!run || !run.members) return;
+
+  // Gig Worker: resistant to supply chain events — supplies drain less
+  const gigWorker = run.members.find(m => m.alive && m.id === 'gig-worker');
+  if (gigWorker && run.supplies < 5) {
+    // Hustles for extra supplies when low
+    if (Math.random() < 0.3) {
+      run.supplies += 1;
+    }
+  }
+
+  // Teacher: chronically underpaid, class slowly erodes
+  const teacher = run.members.find(m => m.alive && m.id === 'teacher');
+  if (teacher) {
+    if (Math.random() < 0.15) {
+      teacher.classStat = Math.max(1, teacher.classStat - 0.1);
+    }
+  }
+
+  // Boomer: "just the flu" — hides COVID options from others
+  // (handled in event processing via requires gate)
+
+  // Gen Z: "we're all gonna die broke anyway" — morale barely moves
+  // (handled by capping morale changes for gen-z below)
+
+  // Healthcare Worker: burnout accelerates with each wave
+  const hcw = run.members.find(m => m.alive && m.id === 'healthcare-worker');
+  if (hcw) {
+    const infectedCount = run.members.filter(m => m.alive && m.infection > 20).length;
+    if (infectedCount > 0) {
+      hcw.morale = Math.max(0, hcw.morale - infectedCount * 0.5);
+    }
+  }
+
+  // Essential Worker: immune to infection, morale drains from "hero" treatment
+  const essWorker = run.members.find(m => m.alive && m.id === 'essential-worker');
+  if (essWorker) {
+    essWorker.infection = 0; // immune
+    if (Math.random() < 0.2) {
+      essWorker.morale = Math.max(0, essWorker.morale - 2);
+    }
+  }
+
+  // Disaster Prepper: spends money on bunker supplies
+  const prepper = run.members.find(m => m.alive && m.id === 'disaster-prepper');
+  if (prepper && run.money > 100) {
+    if (Math.random() < 0.25) {
+      run.money = Math.max(0, run.money - 50);
+      run.supplies += 2;
+    }
+  }
+
+  // Debt Slave: debt compounds, can never escape
+  const debtSlave = run.members.find(m => m.alive && m.id === 'debt-slave');
+  if (debtSlave && run.money < 0) {
+    debtSlave.morale = Math.max(0, debtSlave.morale - 2);
+  }
+
+  // Venture Capitalist: morale never drops, class locked at top
+  const vc = run.members.find(m => m.alive && m.id === 'venture-capitalist');
+  if (vc) {
+    vc.morale = Math.max(80, vc.morale); // never drops below 80
+    vc.classStat = Math.max(9, vc.classStat); // locked at top
+  }
+
+  // Cultist: Cthulhu events buff this character
+  // (handled in event effects via requires gate)
+
+  // Conspiracy Theorist: "the algorithm is GIVING you these choices for a reason"
+  // Immune to AI auto-selection
+  // (handled in processChoices)
+
+  // Gen Z: "we're all gonna die broke anyway" — morale barely moves
+  const genZ = run.members.find(m => m.alive && m.id === 'gen-z');
+  if (genZ) {
+    // Gen Z morale is naturally stable — drifts toward 50
+    if (genZ.morale > 50) genZ.morale = Math.max(50, genZ.morale - 0.5);
+    if (genZ.morale < 50) genZ.morale = Math.min(50, genZ.morale + 0.5);
+    // Gen Z gains productivity from AI
+    if (run.agency < 80) {
+      genZ.stamina = Math.min(100, genZ.stamina + 0.5);
+    }
+  }
+
+  // Long COVID: random stat penalties that never fully resolve
+  run.members.filter(m => m.alive && m.longCovid).forEach(m => {
+    m.health = Math.max(0, m.health - 2);
+    m.stamina = Math.max(0, m.stamina - 1);
+  });
+
+  // Automation debuff: member replaced by AI version
+  run.members.filter(m => m.alive && m.automated).forEach(m => {
+    // AI version is more efficient but has zero loyalty
+    m.health = Math.min(100, m.health + 2);
+    m.stamina = Math.min(100, m.stamina + 2);
+    // Random chance the AI member suggests euthanizing low-productivity members
+    if (Math.random() < 0.1) {
+      const weakest = run.members.filter(x => x.alive && x.id !== m.id)
+        .sort((a, b) => (a.health + a.stamina) - (b.health + b.stamina))[0];
+      if (weakest && weakest.health < 30) {
+        // The AI member suggests letting the weakest die
+        run.morale = Math.max(0, run.morale - 10);
+      }
+    }
+  });
 }
 
 // --- Tombstone screen (shown when a party member dies) ---

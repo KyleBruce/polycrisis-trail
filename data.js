@@ -1035,6 +1035,104 @@ const EVENTS = [
 
   // --- MISSING EVENTS from design doc ---
   {
+    id: 'mask-mandate', themes: ['covid'], months: [3, 10], weight: 6,
+    text: 'Mask mandate reinstated. The same man at the grocery store is having the same meltdown. He was having it in 2020. He is having it now. He will be having it in 2030. It is the only constant in your life.',
+    choices: [
+      { text: 'Mask up', effects: { infection: -5, morale: 3 }, reveal: 'You mask up. The man glares at you. You glare back. You both feel alive. This is community.' },
+      { text: 'Ignore it', effects: { infection: 10, morale: -3 }, reveal: 'You ignore the mandate. You get sick. You feel vindicated. You also feel terrible. Both things are true.' },
+      { text: 'Boomer protests', requires: ['boomer'], effects: { morale: 5, infection: 5, hope: -5 }, reveal: 'The Boomer protests the mandate. The Boomer is right about the absurdity. The Boomer is wrong about the science. The Boomer is consistent. That\'s the Boomer\'s gift.' },
+    ]
+  },
+  {
+    id: 'wedding-superspreader', themes: ['covid'], months: [6, 9], weight: 6,
+    text: 'You attend a wedding. It\'s a superspreader event. 12 people infected. One of them is you. The couple is fine. They\'re on their honeymoon. They\'re posting about it. You\'re posting about your symptoms.',
+    choices: [
+      { text: 'Isolate', effects: { infection: 15, morale: -5, supplies: -1 } },
+      { text: 'Power through', effects: { infection: 20, health: -10, morale: -3 } },
+      { text: 'Contact trace', requires: ['healthcare-worker'], effects: { infection: 10, morale: 3 }, reveal: 'The Healthcare Worker traces contacts. It\'s the cousin who "just had allergies." It\'s always the cousin.' },
+    ]
+  },
+  {
+    id: 'booster-shot', themes: ['covid'], months: [3, 10], weight: 5,
+    text: 'Another booster is announced. Your arm hurts. Your uncle has opinions. The nurse says "this one\'s different." It\'s not different. It\'s the same. But you get it anyway.',
+    choices: [
+      { text: 'Get boosted', effects: { infection: -10, morale: -2, health: 2 }, reveal: 'You get boosted. Your arm hurts. You feel responsible. You feel tired. You feel boosted.' },
+      { text: 'Skip it', effects: { infection: 5, morale: 3 }, reveal: 'You skip it. You feel free. You feel reckless. You feel like the uncle. You don\'t like feeling like the uncle.' },
+      { text: 'Healthcare Worker administers', requires: ['healthcare-worker'], effects: { infection: -15, morale: 5 }, reveal: 'The Healthcare Worker administers the booster. They\'ve done this a thousand times. They\'ll do it a thousand more. They\'re tired. They keep going.' },
+    ]
+  },
+  {
+    id: 'kaiju-byproduct', themes: ['kaiju'], months: [8, 11], weight: 5,
+    text: 'Kaiju byproduct found to be valuable. Gold rush begins in the impact zone. Your Disaster Prepper wants to go. The byproduct is glowing. The byproduct is probably radioactive. The byproduct is definitely profitable.',
+    choices: [
+      { text: 'Scavenge', effects: { money: 500, health: -15, sanity: -5 }, reveal: 'You scavenge. You find glowing rocks. You sell them. You feel rich. You feel sick. You feel like you\'ve made a terrible decision. You have.' },
+      { text: 'Avoid it', effects: { morale: -3, supplies: -1 } },
+      { text: 'Prepper goes alone', requires: ['disaster-prepper'], effects: { money: 300, morale: -5, sanity: -3 }, reveal: 'The Prepper goes alone. They come back with rocks. They come back different. They don\'t talk about it. The rocks glow in the dark. The Prepper glows too.' },
+    ]
+  },
+  {
+    id: 'kaiju-communicates', themes: ['kaiju'], months: [6, 11], weight: 4,
+    text: 'The kaiju communicates. It\'s asking for its attorney. It has a law degree. It\'s from a prestigious school. It wants to discuss property damage liability. It has a point.',
+    choices: [
+      { text: 'Listen', effects: { sanity: -5, morale: 3, agency: 3 }, reveal: 'You listen. The kaiju is articulate. The kaiju is polite. The kaiju is still a 300-foot monster. The cognitive dissonance is the worst part.' },
+      { text: 'Run away', effects: { morale: -5, supplies: -1 } },
+      { text: 'Conspiracy Theorist interprets', requires: ['conspiracy-theorist'], effects: { sanity: -3, morale: 5, hope: 3 }, reveal: 'The Conspiracy Theorist interprets. The kaiju is suing the government. The government deserves it. The kaiju has a case. You almost believe it.' },
+    ]
+  },
+  {
+    id: 'kaiju-insurance-adjuster', themes: ['kaiju', 'neo-feudalism'], months: [6, 8, 11], weight: 5,
+    text: 'Insurance adjuster: "Kaiju damage isn\'t covered under your plan." You have the premium plan. The adjuster is sympathetic. The adjuster is an AI. The AI\'s sympathy is algorithmic. It\'s still sympathy.',
+    choices: [
+      { text: 'Appeal', effects: { money: -300, morale: -8, sanity: -3 }, reveal: 'The appeal is reviewed by an AI. It finds in favor of the insurance company. The insurance company also uses AI. They\'re friends now.' },
+      { text: 'Accept it', effects: { money: -500, morale: -5, hope: -5 } },
+      { text: 'Venture Capitalist invests', requires: ['venture-capitalist'], effects: { money: 1000, morale: 5, hope: -8 }, reveal: 'The VC invests in the insurance company. The VC profits from your loss. The VC explains "market efficiency." You want to hit the VC. You don\'t. You can\'t afford to.' },
+    ]
+  },
+  {
+    id: 'paycheck-destitution', themes: ['neo-feudalism'], months: [4, 7, 9, 12], weight: 6,
+    text: 'You\'re one missed paycheck from destitution. So is everyone else. This is normal. This is fine. The fire is fine. The dog is fine. You are not fine.',
+    choices: [
+      { text: 'Work overtime', effects: { money: 200, health: -8, stamina: -5, morale: -3 } },
+      { text: 'Cut expenses', effects: { money: 100, supplies: -2, morale: -5 }, reveal: 'You cut expenses. You eat less. You sleep less. You work more. You\'re not sure which is killing you faster. It\'s probably the work.' },
+      { text: 'Gig Worker hustles', requires: ['gig-worker'], effects: { money: 400, stamina: -10, morale: 3 }, reveal: 'The Gig Worker hustles. Three apps, two gigs, one prayer. They make rent. They lose sleep. They keep going. They have no choice.' },
+    ]
+  },
+  {
+    id: 'vc-tax-break', themes: ['neo-feudalism'], months: [4, 12], weight: 4,
+    text: 'Venture Capitalist party member receives a tax break. "Trickle down," they explain. Nothing trickles. The money pools. The money stays. The money is comfortable where it is.',
+    choices: [
+      { text: 'Accept it', effects: { money: 200, morale: -5, hope: -3 }, reveal: 'You accept the tax break. It\'s $200. The VC gets $2 million. The VC is grateful. You are not. The math is not in your favor.' },
+      { text: 'Protest', effects: { morale: 5, money: -50, hope: 3 }, reveal: 'You protest. Nobody listens. The tax break is approved. The VC is unaffected. You feel righteous. Righteousness doesn\'t pay rent.' },
+    ]
+  },
+  {
+    id: 'ai-debt-collector', themes: ['neo-feudalism', 'ai'], months: [9, 12], weight: 5,
+    text: 'Debt collector calls. It\'s an AI. The AI is more sympathetic than the human was. The AI understands your situation. The AI still wants its money. The AI always wants its money.',
+    choices: [
+      { text: 'Negotiate', effects: { money: -100, morale: 3, agency: -3 }, reveal: 'You negotiate. The AI offers a payment plan. The payment plan is predatory. The AI knows this. The AI offers it anyway. The AI is just doing its job.' },
+      { text: 'Ignore it', effects: { morale: -5, hope: -5, money: -50 }, reveal: 'You ignore it. The calls increase. The AI is persistent. The AI doesn\'t sleep. The AI doesn\'t forget. The AI doesn\'t forgive.' },
+      { text: 'Debt Slave answers', requires: ['debt-slave'], effects: { morale: -8, sanity: -3, money: -200 }, reveal: 'The Debt Slave answers. They know the script. They\'ve heard it before. They\'ll hear it again. The AI recognizes them. The AI has a file. The file is thick.' },
+    ]
+  },
+  {
+    id: 'automation-debuff', themes: ['ai'], months: [5, 9, 11], weight: 5,
+    text: 'Your company announces "AI workforce optimization." A random party member is replaced by an AI version. The AI version is more efficient. The AI version has zero loyalty. The AI version suggests letting low-productivity members go. You\'re not sure if you should be worried. You should be worried.',
+    choices: [
+      { text: 'Accept it', effects: { automated: 1, agency: -5, morale: -5 }, reveal: 'You accept it. The AI version is better at their job. The AI version doesn\'t need sleep. The AI version doesn\'t have feelings. The AI version is watching you.' },
+      { text: 'Fight it', effects: { agency: 5, morale: -8, money: -200 }, reveal: 'You fight it. You lose. The AI is already here. The AI is already working. The AI is already better. You feel obsolete. You are obsolete.' },
+      { text: 'AI Researcher warns', requires: ['ai-researcher'], effects: { sanity: -5, morale: -3, agency: 3 }, reveal: 'The AI Researcher warned you. You didn\'t listen. The AI Researcher is not surprised. The AI Researcher is never surprised. That\'s the AI Researcher\'s tragedy.' },
+    ]
+  },
+  {
+    id: 'long-covid-strikes', themes: ['covid'], months: [6, 10], weight: 5,
+    text: 'Long COVID strikes a random party member. Random stat penalties that never fully resolve. Some party members get it, some don\'t. It\'s never fully clear who has it and who\'s just exhausted from everything else.',
+    choices: [
+      { text: 'Rest', effects: { longCovid: 1, health: -5, morale: -3 }, reveal: 'You rest. It doesn\'t help. The fatigue is bone-deep. The brain fog is real. The recovery is not.' },
+      { text: 'Push through', effects: { longCovid: 1, stamina: -10, morale: 3 }, reveal: 'You push through. You regret it. The Long COVID doesn\'t care about your work ethic. It cares about your mitochondria. It\'s not a fan.' },
+      { text: 'Healthcare Worker treats', requires: ['healthcare-worker'], effects: { longCovid: 1, morale: -5, health: 3 }, reveal: 'The Healthcare Worker treats the symptoms. There are many symptoms. None of them have good treatments. The Healthcare Worker knows this. They try anyway.' },
+    ]
+  },
+  {
     id: 'back-to-school', themes: ['neo-feudalism', 'covid'], months: [9], weight: 5,
     text: 'Back to school. Student debt payments resume. Again. The interest rate is now higher than your mortgage. You don\'t have a mortgage. You have student debt. The irony is not lost on you. It is lost on Congress.',
     choices: [
