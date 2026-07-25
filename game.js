@@ -613,9 +613,15 @@ function restartGame() {
 // INIT
 // ============================================================
 
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = $('#begin-trail-btn');
+function init() {
+  const btn = document.getElementById('begin-trail-btn');
   if (btn) {
     btn.addEventListener('click', startGame);
   }
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
