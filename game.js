@@ -673,9 +673,9 @@ function processChoices(rawChoices) {
   
   // Class: lock expensive options
   choices = choices.map(c => {
-    let locked = !isChoiceAvailable(c);
-    if (!locked && isChoiceClassLocked(c)) {
-      locked = true;
+    let locked = !isChoiceAvailable(c); // locked if requires unavailable
+    if (!locked && run.classStat < 3 && c.effects && c.effects.money && c.effects.money < -200) {
+      locked = true; // expensive choices locked below class 3
     }
     return {
       ...c,
@@ -685,16 +685,30 @@ function processChoices(rawChoices) {
     };
   });
   
-  // If class < 1, unlock only the first available choice
+  // If class < 1, unlock only the first available choice, lock the rest
   if (run.classStat < 1) {
     let foundUnlocked = false;
     choices = choices.map(c => {
       if (!c.locked && !foundUnlocked) {
         foundUnlocked = true;
-        return c;
+        return c; // keep this one unlocked
       }
       return { ...c, locked: true };
     });
+  }
+  
+  // SAFETY: if ALL choices are locked (e.g. all require dead members),
+  // add a fallback "do nothing" option
+  if (!choices.some(c => !c.locked)) {
+    if (choices.length > 0) {
+      choices[0] = {
+        ...choices[0],
+        locked: false,
+        text: 'Do nothing. What else can you do?',
+        origIdx: -1, // sentinel: no original choice
+        isFallback: true,
+      };
+    }
   }
   
   return { choices, autoChoice };
@@ -1050,6 +1064,28 @@ function makeChoice(idx) {
   if (!event) return;
   const choice = run.currentChoices[idx];
   if (!choice || choice.locked) return;
+
+  // Handle fallback choice (no original to map to)
+  if (choice.isFallback) {
+    const fallbackChoice = { text: 'Do nothing. What else can you do?', effects: {}, reveal: 'You do nothing. The polycrisis continues without your input. It was going to anyway.' };
+    
+    run.log.push({
+      month: MONTHS[run.monthIdx].name,
+      event: event.text,
+      choice: fallbackChoice.text,
+      effects: {},
+      reveal: fallbackChoice.reveal,
+      themes: event.themes,
+    });
+
+    const dead = checkDeaths();
+    if (dead.length > 0 && !isGameOver()) {
+      renderTombstone(dead[0], fallbackChoice);
+    } else {
+      renderOutcome(fallbackChoice, dead, false);
+    }
+    return;
+  }
 
   // Use origIdx to get the original choice data (before shuffling/corruption)
   const originalChoice = event.choices[choice.origIdx];
