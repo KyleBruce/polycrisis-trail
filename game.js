@@ -167,7 +167,7 @@ function renderPartySelection() {
         <button class="nav-btn nav-continue" id="btn-party-continue" ${state.party.length !== 4 ? 'disabled' : ''} onclick="renderNameParty()">Continue →</button>
       </div>
     </div>
-  `);
+  `, { instant: true });
   showScreen('game');
 }
 
@@ -181,7 +181,9 @@ function togglePartyMember(id) {
     if (state.party.length >= 4) return;
     state.party.push(member);
   }
+  const scrollTop = window.scrollY;
   renderPartySelection();
+  window.scrollTo({ top: scrollTop, behavior: 'instant' });
 }
 
 // ============================================================
@@ -298,7 +300,7 @@ function renderResolutions() {
         <button class="nav-btn nav-continue" onclick="renderSummary()">Confirm Resolutions →</button>
       </div>
     </div>
-  `);
+  `, { instant: true });
   showScreen('game', true); // preserve scroll on re-render
 }
 
@@ -326,7 +328,11 @@ function adjustResolution(id, delta) {
 
   state.resolutions[id] = next;
   if (next === 0) delete state.resolutions[id];
+
+  // Capture scroll position before re-render
+  const scrollTop = window.scrollY;
   renderResolutions();
+  window.scrollTo({ top: scrollTop, behavior: 'instant' });
 }
 
 // ============================================================
