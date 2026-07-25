@@ -84,7 +84,7 @@ This is where the game earns its name. Multiple crises per month, and each theme
 
 ---
 
-## Phase 5 — The Weirdness Layer (juice)
+## ✅ Phase 5 — The Weirdness Layer (DONE)
 
 Visual/audio degradation per theme (DESIGN.md "Visual Style"):
 
