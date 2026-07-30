@@ -1996,21 +1996,12 @@ function updateAudioForVisualMode(visualClasses) {
 }
 
 // ============================================================
-// INIT
+// GLOBAL ERROR HANDLER — surface errors on screen, not just console
 // ============================================================
 
-function init() {
-  console.log('[Polycrisis Trail] init() called, readyState:', document.readyState);
-  const btn = document.getElementById('begin-trail-btn');
-  console.log('[Polycrisis Trail] button found:', !!btn);
-  if (btn) {
-    btn.addEventListener('click', startGame);
-    console.log('[Polycrisis Trail] click listener attached');
-  }
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
+window.addEventListener('error', (e) => {
+  const detail = e.error ? e.error.stack || e.error.message : (e.message || 'Unknown error');
+  document.body.insertAdjacentHTML('afterbegin',
+    '<div style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#ff4444;color:#fff;padding:1rem;font-family:monospace;font-size:14px;white-space:pre-wrap">⚠️ Polycrisis Trail Error: ' + detail + '</div>'
+  );
+});

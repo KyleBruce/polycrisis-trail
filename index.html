@@ -93,7 +93,7 @@
     </div>
 
     <div class="cta">
-      <button class="cta-button" id="begin-trail-btn" onclick="startGame()">BEGIN THE TRAIL</button>
+      <button class="cta-button" id="begin-trail-btn" onclick="try{startGame()}catch(e){document.body.insertAdjacentHTML('afterbegin','<div style=\'position:fixed;top:0;left:0;right:0;z-index:99999;background:#ff4444;color:#fff;padding:1rem;font-family:monospace;font-size:14px;white-space:pre-wrap\'>⚠️ '+e.message+'</div>')}">BEGIN THE TRAIL</button>
     </div>
 
     <div class="audio-toggle">
